@@ -53,7 +53,7 @@ GridView::GridView(void)
 	fMenu = new BMenu("Game");
 	bar->AddItem(fMenu);
 	
-	fMenu->AddItem(new BMenuItem("Restart Level",new BMessage(M_RESET_LEVEL),'R'));
+	fMenu->AddItem(new BMenuItem("Restart level",new BMessage(M_RESET_LEVEL),'R'));
 	fMenu->AddSeparatorItem();
 	
 	fSoundMenu = new BMenu("Sound");
@@ -67,7 +67,7 @@ GridView::GridView(void)
 		fSoundMenu->ItemAt(1)->SetMarked(true);
 	
 	fMenu->AddSeparatorItem();
-	fMenu->AddItem(new BMenuItem("How to Play",new BMessage(M_SHOW_MANUAL)));
+	fMenu->AddItem(new BMenuItem("How to play",new BMessage(M_SHOW_MANUAL)));
 	
 	fMenu->AddSeparatorItem();
 	fMenu->AddItem(new BMenuItem("About",new BMessage(B_ABOUT_REQUESTED)));
@@ -76,7 +76,7 @@ GridView::GridView(void)
 	fLevelMenu->SetRadioMode(true);
 	bar->AddItem(fLevelMenu);
 	
-	fPackMenu = new BMenu("Puzzle Pack");
+	fPackMenu = new BMenu("Puzzle pack");
 	for(int32 i=0; i<gPuzzles.CountPacks(); i++)
 	{
 		PuzzlePack *pack = gPuzzles.PackAt(i);

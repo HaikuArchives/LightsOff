@@ -264,16 +264,16 @@ static uint32 FifteenPack[] =
 PuzzlePackSet::PuzzlePackSet(void)
 {
 	fList.AddItem(new ClassicPuzzlePack("Classic",DefaultPack,50));
-	fList.AddItem(new PuzzlePack("Six Move Puzzles",SixPack,100,6));
-	fList.AddItem(new PuzzlePack("Seven Move Puzzles",SevenPack,100,7));
-	fList.AddItem(new PuzzlePack("Eight Move Puzzles",EightPack,100,8));
-	fList.AddItem(new PuzzlePack("Nine Move Puzzles",NinePack,100,9));
-	fList.AddItem(new PuzzlePack("Ten Move Puzzles",TenPack,100,10));
-	fList.AddItem(new PuzzlePack("Eleven Move Puzzles",ElevenPack,100,11));
-	fList.AddItem(new PuzzlePack("Twelve Move Puzzles",TwelvePack,100,12));
-	fList.AddItem(new PuzzlePack("Thirteen Move Puzzles",ThirteenPack,100,13));
-	fList.AddItem(new PuzzlePack("Fourteen Move Puzzles",FourteenPack,100,14));
-	fList.AddItem(new PuzzlePack("Fifteen Move Puzzles",FifteenPack,100,15));
+	fList.AddItem(new PuzzlePack("Six move puzzles",SixPack,100,6));
+	fList.AddItem(new PuzzlePack("Seven move puzzles",SevenPack,100,7));
+	fList.AddItem(new PuzzlePack("Eight move puzzles",EightPack,100,8));
+	fList.AddItem(new PuzzlePack("Nine move puzzles",NinePack,100,9));
+	fList.AddItem(new PuzzlePack("Ten move puzzles",TenPack,100,10));
+	fList.AddItem(new PuzzlePack("Eleven move puzzles",ElevenPack,100,11));
+	fList.AddItem(new PuzzlePack("Twelve move puzzles",TwelvePack,100,12));
+	fList.AddItem(new PuzzlePack("Thirteen move puzzles",ThirteenPack,100,13));
+	fList.AddItem(new PuzzlePack("Fourteen move puzzles",FourteenPack,100,14));
+	fList.AddItem(new PuzzlePack("Fifteen move puzzles",FifteenPack,100,15));
 }
 
 PuzzlePackSet::~PuzzlePackSet(void)
