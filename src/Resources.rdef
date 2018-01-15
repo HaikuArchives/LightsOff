@@ -1,3 +1,18 @@
+resource app_signature "application/x-vnd.wgp-LightsOff";
+
+resource app_version {
+	major  = 1,
+	middle = 0,
+	minor  = 0,
+
+	variety = B_APPV_BETA,
+	internal = 1,
+
+	short_info = "Lights Off",
+	long_info = "An addictive puzzle game"
+};
+
+resource app_flags B_SINGLE_LAUNCH;
 
 resource large_icon array {
 	$"1617171687878787878787878787878787878787878787878787878787ADAED4"
@@ -517,18 +532,3 @@ resource(4) #'PNG ' array {
 	$"8C08220272EBF803871E208C06B168530000000049454E44AE426082"
 };
 
-resource app_signature "application/x-vnd.wgp-LightsOff";
-
-resource app_version {
-	major  = 1,
-	middle = 0,
-	minor  = 0,
-
-	variety = B_APPV_BETA,
-	internal = 1,
-
-	short_info = "Lights Off",
-	long_info = "An addictive puzzle game"
-};
-
-resource app_flags B_SINGLE_LAUNCH;
