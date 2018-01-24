@@ -1,23 +1,23 @@
 #include "TwoStateDrawButton.h"
 
-TwoStateDrawButton::TwoStateDrawButton(BRect frame, const char *name, BBitmap *upone, 
-										BBitmap *downone, BBitmap *uptwo, 
-										BBitmap *downtwo, BMessage *msg, 
-										const int32 &resize, const int32 &flags)
- : BButton(frame, name, "", msg, resize, flags),
+
+TwoStateDrawButton::TwoStateDrawButton(BRect frame, const char *name,
+	BBitmap *upone, BBitmap *downone, BBitmap *uptwo, BBitmap *downtwo,
+	BMessage *msg, const int32 &resize, const int32 &flags)
+	:
+	BButton(frame, name, "", msg, resize, flags),
  	fUpOne(upone),
 	fDownOne(downone),
 	fUpTwo(uptwo),
 	fDownTwo(downtwo),
 	fDisabledOne(NULL),
 	fDisabledTwo(NULL),
-	fButtonState(true)
-
+	fButtonState(false)
 {
-	fButtonState=false;
 }
 
-TwoStateDrawButton::~TwoStateDrawButton(void)
+
+TwoStateDrawButton::~TwoStateDrawButton()
 {
 	delete fUpOne;
 	delete fDownOne;
@@ -26,6 +26,7 @@ TwoStateDrawButton::~TwoStateDrawButton(void)
 	delete fDisabledOne;
 	delete fDisabledTwo;
 }
+
 
 void
 TwoStateDrawButton::ResizeToPreferred(void)
@@ -64,34 +65,36 @@ TwoStateDrawButton::SetBitmaps(BBitmap *upone, BBitmap *downone, BBitmap *uptwo,
 	fDownTwo = downtwo;
 }
 
+
 void TwoStateDrawButton::SetDisabled(BBitmap *disabledone, BBitmap *disabledtwo)
 {
 	delete fDisabledOne;
 	delete fDisabledTwo;
-	
+
 	fDisabledOne = disabledone;
 	fDisabledTwo = disabledtwo;
 }
 
+
 void TwoStateDrawButton::MouseUp(BPoint pt)
 {
 	BButton::MouseUp(pt);
-	fButtonState = fButtonState ? false : true;
+	fButtonState = !fButtonState;
 	Invalidate();
 }
+
 
 void
 TwoStateDrawButton::SetState(int32 value)
 {
-	if(fButtonState!=value)
-	{
-		if(value==0)
-			fButtonState = false;
-		else
-			fButtonState = true;
+	bool state = value != 0;
+
+	if (fButtonState != state) {
+		fButtonState = state;
 		Invalidate();
 	}
 }
+
 
 void TwoStateDrawButton::Draw(BRect update)
 {
