@@ -159,110 +159,90 @@ void GridView::AttachedToWindow(void)
 void GridView::MessageReceived(BMessage *msg)
 {
 	int32 index = msg->what - 1000;
-	switch(msg->what)
-	{
+
+	switch (index) {
 		// Top row cases
-		case 1000:
-		{
+		case 0:
 			FlipButton(1);
 			FlipButton(5);
 			break;
-		}
-		case 1001:
-		case 1002:
-		case 1003:
-		{
-			FlipButton(index-1);
-			FlipButton(index+1);
-			FlipButton(index+5);
+		case 1:
+		case 2:
+		case 3:
+			FlipButton(index - 1);
+			FlipButton(index + 1);
+			FlipButton(index + 5);
 			break;
-		}
-		case 1004:
-		{
+		case 4:
 			FlipButton(3);
 			FlipButton(9);
 			break;
-		}
-		
+
 		// middle of left column
-		case 1005:
-		case 1010:
-		case 1015:
-		{
-			FlipButton(index-5);
-			FlipButton(index+1);
-			FlipButton(index+5);
+		case 5:
+		case 10:
+		case 15:
+			FlipButton(index - 5);
+			FlipButton(index + 1);
+			FlipButton(index + 5);
 			break;
-		}
-		
+
 		// middle of right column
-		case 1009:
-		case 1014:
-		case 1019:
-		{
-			FlipButton(index-5);
-			FlipButton(index-1);
-			FlipButton(index+5);
+		case 9:
+		case 14:
+		case 19:
+			FlipButton(index - 5);
+			FlipButton(index - 1);
+			FlipButton(index + 5);
 			break;
-		}
-		
+
 		// center nine buttons
-		case 1006:
-		case 1007:
-		case 1008:
-		case 1011:
-		case 1012:
-		case 1013:
-		case 1016:
-		case 1017:
-		case 1018:
-		{
-			FlipButton(index-5);
-			FlipButton(index+1);
-			FlipButton(index-1);
-			FlipButton(index+5);
+		case 6:
+		case 7:
+		case 8:
+		case 11:
+		case 12:
+		case 13:
+		case 16:
+		case 17:
+		case 18:
+			FlipButton(index - 5);
+			FlipButton(index + 1);
+			FlipButton(index - 1);
+			FlipButton(index + 5);
 			break;
-		}
-		
+
 		// Bottom row cases
-		case 1020:
-		{
+		case 20:
 			FlipButton(15);
 			FlipButton(21);
 			break;
-		}
-		case 1021:
-		case 1022:
-		case 1023:
-		{
-			FlipButton(index-1);
-			FlipButton(index+1);
-			FlipButton(index-5);
+		case 21:
+		case 22:
+		case 23:
+			FlipButton(index - 1);
+			FlipButton(index + 1);
+			FlipButton(index - 5);
 			break;
-		}
-		case 1024:
-		{
+		case 24:
 			FlipButton(23);
 			FlipButton(19);
 			break;
-		}
 		default:
 			break;
 	}
-	
-	if(msg->what >= 1000 && msg->what <= 1024)
-	{
-		FlipButton(index);
+
+	if (index >= 0 && index <= 24) {
 		fMoveCount++;
 		SetMovesLabel(fMoveCount);
-		
-		if(fUseSound)
+
+		if (fUseSound)
 			fClickSound->StartPlaying();
 	}
-	
-	if(fGrid.GetGridValues()==0)
+
+	if (fGrid.GetGridValues() == 0)
 		HandleFinish();
-	
+
 	switch(msg->what)
 	{
 		case M_SHOW_MANUAL:
