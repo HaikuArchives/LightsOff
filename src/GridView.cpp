@@ -21,6 +21,8 @@ enum
 	M_CHOOSE_LEVEL,
 	M_SOUND_ON,
 	M_SOUND_OFF,
+	M_LIGHTS_OFF,
+	M_LIGHTS_OUT,
 	M_SHOW_MANUAL
 };
 
@@ -65,6 +67,13 @@ GridView::GridView(void)
 		fSoundMenu->ItemAt(0)->SetMarked(true);
 	else
 		fSoundMenu->ItemAt(1)->SetMarked(true);
+
+	fRulesMenu = new BMenu("Rules");
+	fMenu->AddItem(fRulesMenu);
+	fRulesMenu->AddItem(new BMenuItem("Lights Off!",new BMessage(M_LIGHTS_OFF)));
+	fRulesMenu->AddItem(new BMenuItem("Lights Out!",new BMessage(M_LIGHTS_OUT)));
+	fRulesMenu->SetRadioMode(true);
+	fRulesMenu->ItemAt(fLightsOut)->SetMarked(true);
 	
 	fMenu->AddSeparatorItem();
 	fMenu->AddItem(new BMenuItem("How to play",new BMessage(M_SHOW_MANUAL)));
@@ -154,6 +163,7 @@ void GridView::AttachedToWindow(void)
 	fLevelMenu->SetTargetForItems(this);
 	fPackMenu->SetTargetForItems(this);
 	fSoundMenu->SetTargetForItems(this);
+	fRulesMenu->SetTargetForItems(this);
 }
 
 void GridView::MessageReceived(BMessage *msg)
@@ -233,6 +243,29 @@ void GridView::MessageReceived(BMessage *msg)
 	}
 
 	if (index >= 0 && index <= 24) {
+		if (fLightsOut) {
+			// the Lights Out! game also flips the adjacent diagonal buttons
+
+			const int32 n = 5;	// n by n grid
+			const int32 bottomLeft = n * (n - 1);
+
+			if (index % n) {		// not leftmost column
+				if (index >= n)			// not top row
+					FlipButton(index - n - 1);	// upper-left diagonal
+
+				if (index < bottomLeft)	// not bottom row
+					FlipButton(index + n - 1);	// lower-left diagonal
+			}
+
+			if ((index + 1) % n) {	// not rightmost column
+				if (index >= n)			// not top row
+					FlipButton(index - n + 1);	// upper-right diagonal
+
+				if (index < bottomLeft)	// not bottom row
+					FlipButton(index + n + 1);	// lower-right diagonal
+			}
+		}
+
 		FlipButton(index);
 		fMoveCount++;
 		SetMovesLabel(fMoveCount);
@@ -265,6 +298,12 @@ void GridView::MessageReceived(BMessage *msg)
 			fUseSound = false;
 			break;
 		}
+		case M_LIGHTS_OFF:
+			fLightsOut = false;
+			break;
+		case M_LIGHTS_OUT:
+			fLightsOut = true;
+			break;
 		case M_RESET_LEVEL:
 		{
 			SetLevel(fLevel);
@@ -447,11 +486,15 @@ void GridView::StartupPreferences(void)
 		
 		if(preferences.FindBool("usesound",&fUseSound)!=B_OK)
 			fUseSound = true;
+
+		if (preferences.FindBool("lightsout", &fLightsOut) != B_OK)
+			fLightsOut = false;
 	}
 	else
 	{
 		fPuzzle = gPuzzles.PackAt(0);
 		fUseSound = true;
+		fLightsOut = false;
 	}
 	
 	if(fUseSound)
@@ -478,8 +521,7 @@ void GridView::ShutdownPreferences(void)
 	}
 	preferences.AddString("lastpack",fPuzzle->Name());
 	preferences.AddBool("usesound",fUseSound);
+	preferences.AddBool("lightsout", fLightsOut);
 	
 	SavePreferences(PREFERENCES_PATH);
 }
-
-

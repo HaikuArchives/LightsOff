@@ -30,7 +30,7 @@ private:
 	void HandleFinish(void);
 	
 	TwoStateDrawButton **fButtons;
-	BMenu *fMenu,*fLevelMenu, *fPackMenu, *fSoundMenu;
+	BMenu *fMenu,*fLevelMenu, *fPackMenu, *fSoundMenu, *fRulesMenu;
 	BStringView *fLevelLabel;
 	BStringView *fMovesLabel;
 	
@@ -39,6 +39,7 @@ private:
 	
 	uint32 fLevel;
 	bool fUseSound;
+	bool fLightsOut;
 	uint32 fMoveCount;
 	
 	BFileGameSound *fClickSound;
