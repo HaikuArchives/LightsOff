@@ -233,6 +233,7 @@ void GridView::MessageReceived(BMessage *msg)
 	}
 
 	if (index >= 0 && index <= 24) {
+		FlipButton(index);
 		fMoveCount++;
 		SetMovesLabel(fMoveCount);
 

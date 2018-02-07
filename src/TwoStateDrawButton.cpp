@@ -79,7 +79,6 @@ void TwoStateDrawButton::SetDisabled(BBitmap *disabledone, BBitmap *disabledtwo)
 void TwoStateDrawButton::MouseUp(BPoint pt)
 {
 	BButton::MouseUp(pt);
-	fButtonState = !fButtonState;
 	Invalidate();
 }
 
