@@ -27,7 +27,9 @@ enum
 PuzzlePackSet gPuzzles;
 
 GridView::GridView(void)
- : BView(BRect(0,0,260,280), "gridview", B_FOLLOW_NONE, B_WILL_DRAW)
+	:
+	BView(BRect(0, 0, 260, 280), "gridview", B_FOLLOW_ALL, B_WILL_DRAW),
+	fDimension(5)
 {
 	entry_ref ref;
 	
@@ -89,14 +91,15 @@ GridView::GridView(void)
 	fPackMenu->SetRadioMode(true);
 	bar->AddItem(fPackMenu);
 	
-	fButtons = (TwoStateDrawButton**) malloc(sizeof(TwoStateDrawButton)*25);
+	fButtons = (TwoStateDrawButton**)
+		malloc(sizeof(TwoStateDrawButton) * fDimension * fDimension);
 	float inset = 50;
 	r.Set(inset,inset + bar->Frame().bottom,inset+32,inset + bar->Frame().bottom + 32);
 	
 	int8 count=0;
-	for(int32 j=0; j<5; j++)
+	for (int32 j = 0; j < fDimension; j++)
 	{
-		for(int32 i=0; i<5;i++)
+		for (int32 i = 0; i < fDimension; i++)
 		{
 			BBitmap *off_up = BTranslationUtils::GetBitmap(B_PNG_FORMAT,1);
 			BBitmap *off_down = BTranslationUtils::GetBitmap(B_PNG_FORMAT,2);
@@ -114,7 +117,7 @@ GridView::GridView(void)
 		}
 		r.OffsetTo(inset,r.bottom+1);
 	}
-	
+
 	r.left = 10;
 	r.top = bar->Frame().bottom + 10;
 	r.right = 11;
@@ -123,8 +126,9 @@ GridView::GridView(void)
 	fLevelLabel->ResizeToPreferred();
 	AddChild(fLevelLabel);
 	fLevelLabel->SetHighColor(255,255,255);
-	
-	fMovesLabel = new BStringView(BRect(0,0,1,1),"moveslabel","Moves: 1000");
+
+	fMovesLabel = new BStringView(BRect(0, 0, 1, 1), "moveslabel", "Moves: 10",
+		B_FOLLOW_RIGHT);
 	fMovesLabel->ResizeToPreferred();
 	fMovesLabel->MoveTo(Bounds().right - 10 - fMovesLabel->Frame().Width(),
 			bar->Frame().bottom + 10);
@@ -147,7 +151,10 @@ GridView::~GridView(void)
 
 void GridView::AttachedToWindow(void)
 {
-	for(int32 i=0; i<25; i++)
+	const float delta = fButtons[0]->Bounds().Width() * (fDimension - 5);
+	Window()->ResizeBy(delta, delta);
+
+	for (int32 i = 0; i < fDimension * fDimension; i++)
 		fButtons[i]->SetTarget(this);
 	
 	fMenu->SetTargetForItems(this);
@@ -159,7 +166,7 @@ void GridView::AttachedToWindow(void)
 void GridView::MessageReceived(BMessage *msg)
 {
 	const int32 index = msg->what - 1000;
-	const int32 n = 5;	// n by n grid
+	const int32 n = fDimension;	// n by n grid
 
 	if (index >= 0 && index < n * n) {
 		if (index % n)	// not leftmost column
@@ -306,7 +313,7 @@ void GridView::SetLevel(uint8 level)
 	fLevelLabel->ResizeToPreferred();
 	
 	fGrid.SetGridValues(fPuzzle->ValueAt(level));
-	for(uint8 i=0; i<25; i++)
+	for (uint8 i = 0; i < fDimension * fDimension; i++)
 	{
 		if(fGrid.ValueAt(i))
 			fButtons[i]->SetState(1);
