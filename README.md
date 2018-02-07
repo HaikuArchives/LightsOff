@@ -16,7 +16,7 @@ When you press a button, you turn it off or on, just like a light switch. Additi
 
 ### Winning
 
-You must solve a puzzle within 10 moves of the minimum required. This means that you must solve the every puzzle in the _Six Move Puzzles_ pack within 16 moves. For the Classic pack, the requirements are listed below:
+You must solve a puzzle within 10 moves of the minimum required. This means that you must solve every puzzle in the _Six Move Puzzles_ pack within 16 moves. For the Classic pack, the requirements are listed below:
 
 Level | Moves Required | Level | Moves Required
 :---: | :---: | :---: | :---:

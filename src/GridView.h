@@ -37,6 +37,7 @@ private:
 	Grid fGrid;
 	PuzzlePack *fPuzzle;
 	
+	uint8 fDimension;
 	uint32 fLevel;
 	bool fUseSound;
 	uint32 fMoveCount;
