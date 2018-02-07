@@ -158,81 +158,22 @@ void GridView::AttachedToWindow(void)
 
 void GridView::MessageReceived(BMessage *msg)
 {
-	int32 index = msg->what - 1000;
+	const int32 index = msg->what - 1000;
+	const int32 n = 5;	// n by n grid
 
-	switch (index) {
-		// Top row cases
-		case 0:
-			FlipButton(1);
-			FlipButton(5);
-			break;
-		case 1:
-		case 2:
-		case 3:
-			FlipButton(index - 1);
-			FlipButton(index + 1);
-			FlipButton(index + 5);
-			break;
-		case 4:
-			FlipButton(3);
-			FlipButton(9);
-			break;
+	if (index >= 0 && index < n * n) {
+		if (index % n)	// not leftmost column
+			FlipButton(index - 1);	// left neighbor
 
-		// middle of left column
-		case 5:
-		case 10:
-		case 15:
-			FlipButton(index - 5);
-			FlipButton(index + 1);
-			FlipButton(index + 5);
-			break;
+		if ((index + 1) % n)	// not rightmost column
+			FlipButton(index + 1);	// right neighbor
 
-		// middle of right column
-		case 9:
-		case 14:
-		case 19:
-			FlipButton(index - 5);
-			FlipButton(index - 1);
-			FlipButton(index + 5);
-			break;
+		if (index >= n)	// not top row
+			FlipButton(index - n);	// neighbor above
 
-		// center nine buttons
-		case 6:
-		case 7:
-		case 8:
-		case 11:
-		case 12:
-		case 13:
-		case 16:
-		case 17:
-		case 18:
-			FlipButton(index - 5);
-			FlipButton(index + 1);
-			FlipButton(index - 1);
-			FlipButton(index + 5);
-			break;
+		if (index < n * (n - 1))	// not bottom row
+			FlipButton(index + n);	// neighbor below
 
-		// Bottom row cases
-		case 20:
-			FlipButton(15);
-			FlipButton(21);
-			break;
-		case 21:
-		case 22:
-		case 23:
-			FlipButton(index - 1);
-			FlipButton(index + 1);
-			FlipButton(index - 5);
-			break;
-		case 24:
-			FlipButton(23);
-			FlipButton(19);
-			break;
-		default:
-			break;
-	}
-
-	if (index >= 0 && index <= 24) {
 		FlipButton(index);
 		fMoveCount++;
 		SetMovesLabel(fMoveCount);
@@ -481,5 +422,3 @@ void GridView::ShutdownPreferences(void)
 	
 	SavePreferences(PREFERENCES_PATH);
 }
-
-
