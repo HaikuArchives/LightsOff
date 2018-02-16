@@ -74,11 +74,7 @@ GridView::GridView()
 	
 	fMenu->AddSeparatorItem();
 	fMenu->AddItem(new BMenuItem("About",new BMessage(B_ABOUT_REQUESTED)));
-	
-	fLevelMenu = new BMenu("Level");
-	fLevelMenu->SetRadioMode(true);
-	bar->AddItem(fLevelMenu);
-	
+
 	fPackMenu = new BMenu("Puzzle pack");
 	for(int32 i=0; i<gPuzzles.CountPacks(); i++)
 	{
@@ -91,7 +87,11 @@ GridView::GridView()
 	
 	fPackMenu->SetRadioMode(true);
 	bar->AddItem(fPackMenu);
-	
+
+	fLevelMenu = new BMenu("Level");
+	fLevelMenu->SetRadioMode(true);
+	bar->AddItem(fLevelMenu);
+
 	fButtons = (TwoStateDrawButton**)
 		malloc(sizeof(TwoStateDrawButton) * fDimension * fDimension);
 	float inset = 50;
@@ -286,7 +286,9 @@ void GridView::SetPack(PuzzlePack *pack)
 		if(index>fPuzzle->Highest())
 			item->SetEnabled(false);
 	}
-	
+
+	fLevelMenu->SetTargetForItems(this);
+
 	for(int32 i=0; i<fPackMenu->CountItems(); i++)
 	{
 		BMenuItem *packitem = fPackMenu->ItemAt(i);
