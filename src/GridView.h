@@ -16,25 +16,25 @@
 class GridView : public BView
 {
 public:
-	GridView(void);
-	~GridView(void);
+	GridView();
+	~GridView();
 	void MessageReceived(BMessage *msg);
-	void AttachedToWindow(void);
-	void StartupPreferences(void);
-	void ShutdownPreferences(void);
+	void AttachedToWindow();
+	void StartupPreferences();
+	void ShutdownPreferences();
 private:
 	void FlipButton(uint8 offset);
 	void SetLevel(uint8 level);
 	void SetPack(PuzzlePack *pack);
 	void SetMovesLabel(uint32 count);
-	void HandleFinish(void);
+	void HandleFinish();
 	
 	TwoStateDrawButton **fButtons;
 	BMenu *fMenu,*fLevelMenu, *fPackMenu, *fSoundMenu;
 	BStringView *fLevelLabel;
 	BStringView *fMovesLabel;
-	
-	Grid fGrid;
+
+	Grid* fGrid;
 	PuzzlePack *fPuzzle;
 	
 	uint8 fDimension;

@@ -26,10 +26,9 @@ enum
 
 PuzzlePackSet gPuzzles;
 
-GridView::GridView(void)
+GridView::GridView()
 	:
-	BView(BRect(0, 0, 260, 280), "gridview", B_FOLLOW_ALL, B_WILL_DRAW),
-	fDimension(5)
+	BView(BRect(0, 0, 260, 280), "gridview", B_FOLLOW_ALL, B_WILL_DRAW)
 {
 	entry_ref ref;
 	
@@ -46,6 +45,8 @@ GridView::GridView(void)
 	fNoWinSound = new BFileGameSound(&ref,false);
 	
 	StartupPreferences();
+	fGrid = new Grid(fDimension);
+
 	SetViewColor(0,0,50);
 	
 	BRect r(0,0,Bounds().Width(),20);
@@ -139,17 +140,18 @@ GridView::GridView(void)
 	SetPack(fPuzzle);
 }
 
-GridView::~GridView(void)
+GridView::~GridView()
 {
 	delete fClickSound;
 	delete fWinSound;
 	delete fNoWinSound;
+	delete fGrid;
 	
 	ShutdownPreferences();
 	free(fButtons);
 }
 
-void GridView::AttachedToWindow(void)
+void GridView::AttachedToWindow()
 {
 	const float delta = fButtons[0]->Bounds().Width() * (fDimension - 5);
 	Window()->ResizeBy(delta, delta);
@@ -189,7 +191,7 @@ void GridView::MessageReceived(BMessage *msg)
 			fClickSound->StartPlaying();
 	}
 
-	if (fGrid.GetGridValues() == 0)
+	if (fGrid->GetGridValues() == 0)
 		HandleFinish();
 
 	switch(msg->what)
@@ -249,12 +251,12 @@ void GridView::FlipButton(uint8 offset)
 	if(fButtons[offset]->GetState())
 	{
 		fButtons[offset]->SetState(0);
-		fGrid.SetValue(offset,false);
+		fGrid->SetValue(offset, false);
 	}
 	else
 	{
 		fButtons[offset]->SetState(1);
-		fGrid.SetValue(offset,true);
+		fGrid->SetValue(offset, true);
 	}
 }
 
@@ -312,10 +314,10 @@ void GridView::SetLevel(uint8 level)
 	fLevelLabel->SetText(label);
 	fLevelLabel->ResizeToPreferred();
 	
-	fGrid.SetGridValues(fPuzzle->ValueAt(level));
+	fGrid->SetGridValues(fPuzzle->ValueAt(level));
 	for (uint8 i = 0; i < fDimension * fDimension; i++)
 	{
-		if(fGrid.ValueAt(i))
+		if (fGrid->ValueAt(i))
 			fButtons[i]->SetState(1);
 		else
 			fButtons[i]->SetState(0);
@@ -331,7 +333,7 @@ void GridView::SetMovesLabel(uint32 count)
 	fMovesLabel->SetText(string.String());
 }
 
-void GridView::HandleFinish(void)
+void GridView::HandleFinish()
 {
 	// Determine whether or not the user finished in the required number of
 	// moves
@@ -369,7 +371,7 @@ void GridView::HandleFinish(void)
 		item->SetEnabled(true);
 }
 
-void GridView::StartupPreferences(void)
+void GridView::StartupPreferences()
 {
 	if(LoadPreferences(PREFERENCES_PATH)==B_OK)
 	{
@@ -392,13 +394,16 @@ void GridView::StartupPreferences(void)
 					fPuzzle=pack;
 			}
 		}
-		
+
+		fDimension = preferences.GetInt8("dimension", 5);
+
 		if(preferences.FindBool("usesound",&fUseSound)!=B_OK)
 			fUseSound = true;
 	}
 	else
 	{
 		fPuzzle = gPuzzles.PackAt(0);
+		fDimension = 5;
 		fUseSound = true;
 	}
 	
@@ -410,7 +415,7 @@ void GridView::StartupPreferences(void)
 	}
 }
 
-void GridView::ShutdownPreferences(void)
+void GridView::ShutdownPreferences()
 {
 	preferences.MakeEmpty();
 	
@@ -425,6 +430,7 @@ void GridView::ShutdownPreferences(void)
 		}
 	}
 	preferences.AddString("lastpack",fPuzzle->Name());
+	preferences.AddInt8("dimension", fDimension);
 	preferences.AddBool("usesound",fUseSound);
 	
 	SavePreferences(PREFERENCES_PATH);
