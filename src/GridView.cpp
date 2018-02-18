@@ -27,9 +27,23 @@ enum
 
 PuzzlePackSet gPuzzles;
 
+static const int8 minDimension = 5;	// set to 3 when ready
+static const int8 maxDimension = 5;	// set to 6 when ready
+static const int8 defaultDimension = 5;
+//static const int8 maxLevels[maxDimension - minDimension + 1] = { 4, 7, 5, 18 };
+static const int8 maxLevels[1] = { 5 };
+
+static void
+SuccessAlert()
+{
+	BAlert* alert = new BAlert("Lights Off", "Congratulations!", "OK");
+	alert->Go();
+}
+
 GridView::GridView()
 	:
-	BView(BRect(0, 0, 260, 280), "gridview", B_FOLLOW_ALL, B_WILL_DRAW)
+	BView(BRect(0, 0, 260, 280), "gridview", B_FOLLOW_ALL, B_WILL_DRAW),
+	fPuzzle(NULL)
 {
 	entry_ref ref;
 	
@@ -79,7 +93,8 @@ GridView::GridView()
 
 	fRandomMenu = new BMenu("Random");
 
-	for (int8 dimension = 3; dimension <= 6; dimension++) {
+	for (int8 dimension = minDimension;
+		dimension <= maxDimension; dimension++) {
 		char label[4];
 		BMessage *msg = new BMessage(M_CHOOSE_RANDOM);
 
@@ -87,11 +102,17 @@ GridView::GridView()
 		msg->AddInt8("dimension", dimension);
 		fRandomMenu->AddItem(new BMenuItem(label, msg));
 	}
-	
+
 	fRandomMenu->SetRadioMode(true);
-//	bar->AddItem(fRandomMenu);
+	fRandomMenu->ItemAt(defaultDimension - minDimension)->SetMarked(true);
 
 	fPackMenu = new BMenu("Puzzle pack");
+	fPackMenu->AddItem(fRandomMenu);
+
+	BMenuItem* superitem = fRandomMenu->Superitem();
+//	superitem->SetShortcut('R', B_COMMAND_KEY);
+	superitem->SetMessage(new BMessage(M_CHOOSE_RANDOM));
+
 	for (int8 i = 0; i < gPuzzles.CountPacks(); i++) {
 		PuzzlePack *pack = gPuzzles.PackAt(i);
 		
@@ -149,8 +170,11 @@ GridView::GridView()
 	fMovesLabel->SetText("Moves: 0");
 	AddChild(fMovesLabel);
 	fMovesLabel->SetHighColor(255,255,255);
-	
-	SetPack(fPuzzle);
+
+	if (fPuzzle)
+		SetPack(fPuzzle);
+	else
+		SetDimension(fDimension);
 }
 
 GridView::~GridView()
@@ -166,7 +190,8 @@ GridView::~GridView()
 
 void GridView::AttachedToWindow()
 {
-	const float delta = fButtons[0]->Bounds().Width() * (fDimension - 5);
+	const float delta
+		= fButtons[0]->Bounds().Width() * (fDimension - defaultDimension);
 	Window()->ResizeBy(delta, delta);
 
 	for (int8 i = 0; i < fDimension * fDimension; i++)
@@ -242,13 +267,12 @@ void GridView::MessageReceived(BMessage *msg)
 		}
 		case M_CHOOSE_RANDOM:
 		{
-			int8 dimension = msg->GetInt8("dimension", 5);
+			int8 dimension = msg->GetInt8("dimension", defaultDimension);
 			if (fDimension != dimension) {
 				fDimension = dimension;
 				fGrid->SetDimension(dimension);
 			}
-			fGrid->Random(dimension);
-			UpdateButtons();
+			SetDimension(dimension);
 			break;
 		}
 		case M_CHOOSE_PACK:
@@ -285,11 +309,31 @@ void GridView::FlipButton(int8 offset)
 	}
 }
 
+void GridView::SetDimension(int8 dimension)
+{
+	fPuzzle = NULL;
+
+	for (int8 index = fLevelMenu->CountItems() - 1; index >= 0; index--)
+		delete fLevelMenu->RemoveItem(index);
+
+	for (int8 index = 0; index < maxLevels[dimension - minDimension]; index++) {
+		BMessage* msg = new BMessage(M_CHOOSE_LEVEL);
+		msg->AddInt8("level", index);
+
+		char levelname[16];
+		sprintf(levelname, "Level %d", index + 1);
+
+		BMenuItem* item = new BMenuItem(levelname, msg);
+		fLevelMenu->AddItem(item);
+	}
+
+	fLevelMenu->SetTargetForItems(this);
+	fPackMenu->ItemAt(0)->SetMarked(true);
+	SetLevel(2);
+}
+
 void GridView::SetPack(PuzzlePack *pack)
 {
-	if(!pack)
-		return;
-	
 	fPuzzle = pack;
 	
 	for(int8 i = fLevelMenu->CountItems() - 1; i >= 0; i--) {
@@ -326,20 +370,22 @@ void GridView::SetPack(PuzzlePack *pack)
 
 void GridView::SetLevel(int8 level)
 {
-	if(fPuzzle->ValueAt(level)==0)
-		return;
-	
 	fLevel = level;
 	fMoveCount = 0;
 	SetMovesLabel(fMoveCount);
 	
-	char label[32];
+	char label[16];
 	sprintf(label, "Level: %d", fLevel + 1);
 	fLevelLabel->SetText(label);
 	fLevelLabel->ResizeToPreferred();
-	
-	fGrid->SetGridValues(fPuzzle->ValueAt(level));
+
+	if (fPuzzle)
+		fGrid->SetGridValues(fPuzzle->ValueAt(level));
+	else
+		fGrid->Random(level + 1);
+
 	UpdateButtons();
+
 	BMenuItem *current = fLevelMenu->ItemAt(level);
 	current->SetMarked(true);
 }
@@ -359,6 +405,12 @@ void GridView::SetMovesLabel(int8 count)
 
 void GridView::HandleFinish()
 {
+	if (fPuzzle == NULL) {
+		SuccessAlert();
+		SetLevel(fLevel);
+		return;
+	}
+
 	// Determine whether or not the user finished in the required number of
 	// moves
 	int8 movesreq = fPuzzle->MovesRequired(fLevel);
@@ -382,8 +434,7 @@ void GridView::HandleFinish()
 	
 	// we got this far, so the user must have won. Congratulate him/her and
 	// advance the level if there are any more in the current puzzle pack
-	BAlert *alert = new BAlert("Lights Off","Congratulations!","OK");
-	alert->Go();
+	SuccessAlert();
 	SetLevel(fLevel+1);
 	
 	// SetLevel() increments fLevel for us
@@ -397,41 +448,33 @@ void GridView::HandleFinish()
 
 void GridView::StartupPreferences()
 {
-	if(LoadPreferences(PREFERENCES_PATH)==B_OK)
-	{
-		BString lastpack;
-		if(preferences.FindString("lastpack",&lastpack)!=B_OK)
-			lastpack = "Classic";
-		
-		for(int8 i = 0; i < gPuzzles.CountPacks(); i++) {
-			PuzzlePack *pack = (PuzzlePack*)gPuzzles.PackAt(i);
-			if(pack)
-			{
-				int8 highest = 0;
-				if (preferences.FindInt8(pack->Name(), &highest) == B_OK)
-					pack->SetHighest(highest);
-				else
-					pack->SetHighest(0);
-				
-				if(strcmp(lastpack.String(),pack->Name())==0)
-					fPuzzle=pack;
-			}
+	if (LoadPreferences(PREFERENCES_PATH) == B_OK) {
+		for(int8 index = 0; index < gPuzzles.CountPacks(); index++) {
+			PuzzlePack* pack = gPuzzles.PackAt(index);
+			pack->SetHighest(preferences.GetInt8(pack->Name(), 0));
 		}
 
-		fDimension = preferences.GetInt8("dimension", 5);
+		BString lastpack;
 
-		if(preferences.FindBool("usesound",&fUseSound)!=B_OK)
-			fUseSound = true;
-	}
-	else
-	{
+		if (preferences.FindString("lastpack", &lastpack) == B_OK)
+			for(int8 index = 0; index < gPuzzles.CountPacks(); index++) {
+				PuzzlePack* pack = gPuzzles.PackAt(index);
+
+				if (strcmp(lastpack.String(), pack->Name()) == 0) {
+					fPuzzle = pack;
+					break;
+				}
+			}
+
+		fDimension = preferences.GetInt8("dimension", defaultDimension);
+		fUseSound = preferences.GetBool("usesound", true);
+	} else {
 		fPuzzle = gPuzzles.PackAt(0);
-		fDimension = 5;
+		fDimension = defaultDimension;
 		fUseSound = true;
 	}
-	
-	if(fUseSound)
-	{
+
+	if (fUseSound) {
 		fClickSound->Preload();
 		fWinSound->Preload();
 		fNoWinSound->Preload();
@@ -451,7 +494,10 @@ void GridView::ShutdownPreferences()
 			preferences.AddInt8(pack->Name(), pack->Highest());
 		}
 	}
-	preferences.AddString("lastpack",fPuzzle->Name());
+
+	if (fPuzzle)
+		preferences.AddString("lastpack", fPuzzle->Name());
+
 	preferences.AddInt8("dimension", fDimension);
 	preferences.AddBool("usesound",fUseSound);
 	

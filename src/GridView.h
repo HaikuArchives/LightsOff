@@ -26,6 +26,7 @@ public:
 private:
 	void FlipButton(int8 offset);
 	void UpdateButtons();
+	void SetDimension(int8 dimension);
 	void SetLevel(int8 level);
 	void SetPack(PuzzlePack *pack);
 	void SetMovesLabel(int8 count);
