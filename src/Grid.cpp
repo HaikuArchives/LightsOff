@@ -22,18 +22,20 @@ void Grid::SetDimension(int8 dimension)
 
 void Grid::Random(int8 minMoves)
 {
+	const int8 numButtons = fGrid.size();
+
 	// start with an empty grid
-	for (int8 index = 0; index < fGrid.size(); index++)
+	for (int8 index = 0; index < numButtons; index++)
 		fData[index] = fGrid[index] = 0;
 
-	if (minMoves > fDimension)
-		minMoves = fDimension;
+	if (minMoves > numButtons)
+		minMoves = numButtons;
 
 	for (int8 count = 0; count < minMoves; count++) {
 		int8 index;
 
 		// next random button not already marked
-		do index = random() % fGrid.size();
+		do index = random() % numButtons;
 		while (fGrid[index]);
 
 		fGrid[index] = 1;	// mark the button to be pressed
@@ -41,7 +43,7 @@ void Grid::Random(int8 minMoves)
 
 	const int8 n = fDimension;
 
-	for (int8 index = 0; index < fGrid.size(); index++)
+	for (int8 index = 0; index < numButtons; index++)
 		if (fGrid[index]) {
 			if (index % n)	// not leftmost column
 				fData[index - 1] = !fData[index - 1];	// left neighbor
