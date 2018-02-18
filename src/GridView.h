@@ -1,5 +1,5 @@
-#ifndef GRIDVIEW_H
-#define GRIDVIEW_H
+#ifndef GRID_VIEW_H
+#define GRID_VIEW_H
 
 #include <View.h>
 #include <Message.h>
@@ -22,29 +22,26 @@ public:
 	void AttachedToWindow();
 	void StartupPreferences();
 	void ShutdownPreferences();
-private:
-	void FlipButton(uint8 offset);
-	void SetLevel(uint8 level);
-	void SetPack(PuzzlePack *pack);
-	void SetMovesLabel(uint32 count);
-	void HandleFinish();
-	
-	TwoStateDrawButton **fButtons;
-	BMenu *fMenu,*fLevelMenu, *fPackMenu, *fSoundMenu;
-	BStringView *fLevelLabel;
-	BStringView *fMovesLabel;
 
-	Grid* fGrid;
+private:
+	void FlipButton(int8 offset);
+	void UpdateButtons();
+	void SetLevel(int8 level);
+	void SetPack(PuzzlePack *pack);
+	void SetMovesLabel(int8 count);
+	void HandleFinish();
+
+	TwoStateDrawButton **fButtons;
+	BMenu *fMenu, *fSoundMenu, *fRandomMenu, *fPackMenu, *fLevelMenu;
+	BStringView *fLevelLabel, *fMovesLabel;
+
+	Grid *fGrid;
 	PuzzlePack *fPuzzle;
-	
-	uint8 fDimension;
-	uint32 fLevel;
+
 	bool fUseSound;
-	uint32 fMoveCount;
-	
-	BFileGameSound *fClickSound;
-	BFileGameSound *fWinSound;
-	BFileGameSound *fNoWinSound;
+	int8 fDimension, fLevel, fMoveCount;
+
+	BFileGameSound *fClickSound, *fWinSound, *fNoWinSound;
 };
 
 #endif
