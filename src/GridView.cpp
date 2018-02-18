@@ -17,6 +17,7 @@ enum
 {
 	M_SHOW_MENU='msmn',
 	M_RESET_LEVEL,
+	M_CHOOSE_RANDOM,
 	M_CHOOSE_PACK,
 	M_CHOOSE_LEVEL,
 	M_SOUND_ON,
@@ -46,6 +47,7 @@ GridView::GridView()
 	
 	StartupPreferences();
 	fGrid = new Grid(fDimension);
+	srandom(system_time());
 
 	SetViewColor(0,0,50);
 	
@@ -75,13 +77,26 @@ GridView::GridView()
 	fMenu->AddSeparatorItem();
 	fMenu->AddItem(new BMenuItem("About",new BMessage(B_ABOUT_REQUESTED)));
 
+	fRandomMenu = new BMenu("Random");
+
+	for (int8 dimension = 3; dimension <= 6; dimension++) {
+		char label[4];
+		BMessage *msg = new BMessage(M_CHOOSE_RANDOM);
+
+		sprintf(label, "%dx%d", dimension, dimension);
+		msg->AddInt8("dimension", dimension);
+		fRandomMenu->AddItem(new BMenuItem(label, msg));
+	}
+	
+	fRandomMenu->SetRadioMode(true);
+//	bar->AddItem(fRandomMenu);
+
 	fPackMenu = new BMenu("Puzzle pack");
-	for(int32 i=0; i<gPuzzles.CountPacks(); i++)
-	{
+	for (int8 i = 0; i < gPuzzles.CountPacks(); i++) {
 		PuzzlePack *pack = gPuzzles.PackAt(i);
 		
 		BMessage *msg = new BMessage(M_CHOOSE_PACK);
-		msg->AddInt32("index",i);
+		msg->AddInt8("index", i);
 		fPackMenu->AddItem(new BMenuItem(pack->Name(),msg));
 	}
 	
@@ -98,10 +113,8 @@ GridView::GridView()
 	r.Set(inset,inset + bar->Frame().bottom,inset+32,inset + bar->Frame().bottom + 32);
 	
 	int8 count=0;
-	for (int32 j = 0; j < fDimension; j++)
-	{
-		for (int32 i = 0; i < fDimension; i++)
-		{
+	for (int8 j = 0; j < fDimension; j++) {
+		for (int8 i = 0; i < fDimension; i++) {
 			BBitmap *off_up = BTranslationUtils::GetBitmap(B_PNG_FORMAT,1);
 			BBitmap *off_down = BTranslationUtils::GetBitmap(B_PNG_FORMAT,2);
 			BBitmap *on_up = BTranslationUtils::GetBitmap(B_PNG_FORMAT,3);
@@ -156,19 +169,20 @@ void GridView::AttachedToWindow()
 	const float delta = fButtons[0]->Bounds().Width() * (fDimension - 5);
 	Window()->ResizeBy(delta, delta);
 
-	for (int32 i = 0; i < fDimension * fDimension; i++)
+	for (int8 i = 0; i < fDimension * fDimension; i++)
 		fButtons[i]->SetTarget(this);
 	
 	fMenu->SetTargetForItems(this);
-	fLevelMenu->SetTargetForItems(this);
-	fPackMenu->SetTargetForItems(this);
 	fSoundMenu->SetTargetForItems(this);
+	fRandomMenu->SetTargetForItems(this);
+	fPackMenu->SetTargetForItems(this);
+	fLevelMenu->SetTargetForItems(this);
 }
 
 void GridView::MessageReceived(BMessage *msg)
 {
-	const int32 index = msg->what - 1000;
-	const int32 n = fDimension;	// n by n grid
+	const int8 index = msg->what - 1000;
+	const int8 n = fDimension;	// n by n grid
 
 	if (index >= 0 && index < n * n) {
 		if (index % n)	// not leftmost column
@@ -226,17 +240,28 @@ void GridView::MessageReceived(BMessage *msg)
 			abwin->Show();
 			break;
 		}
+		case M_CHOOSE_RANDOM:
+		{
+			int8 dimension = msg->GetInt8("dimension", 5);
+			if (fDimension != dimension) {
+				fDimension = dimension;
+				fGrid->SetDimension(dimension);
+			}
+			fGrid->Random(dimension);
+			UpdateButtons();
+			break;
+		}
 		case M_CHOOSE_PACK:
 		{
-			int32 index;
-			if(msg->FindInt32("index",&index)==B_OK)
+			int8 index;
+			if (msg->FindInt8("index", &index) == B_OK)
 				SetPack(gPuzzles.PackAt(index));
 			break;
 		}
 		case M_CHOOSE_LEVEL:
 		{
-			uint8 level;
-			if(msg->FindInt8("level",(int8*)&level)==B_OK)
+			int8 level;
+			if (msg->FindInt8("level", &level) == B_OK)
 				SetLevel(level);
 			break;
 		}
@@ -246,7 +271,7 @@ void GridView::MessageReceived(BMessage *msg)
 }
 
 
-void GridView::FlipButton(uint8 offset)
+void GridView::FlipButton(int8 offset)
 {
 	if(fButtons[offset]->GetState())
 	{
@@ -267,19 +292,17 @@ void GridView::SetPack(PuzzlePack *pack)
 	
 	fPuzzle = pack;
 	
-	for(int32 i=fLevelMenu->CountItems()-1; i>=0; i--)
-	{
+	for(int8 i = fLevelMenu->CountItems() - 1; i >= 0; i--) {
 		BMenuItem *old = fLevelMenu->RemoveItem(i);
 		delete old;
 	}
 	
-	for(uint32 index=0; index<fPuzzle->Size(); index++)
-	{
+	for (int8 index = 0; index < fPuzzle->Size(); index++) {
 		BMessage *msg = new BMessage(M_CHOOSE_LEVEL);
-		msg->AddInt8("level",index);
+		msg->AddInt8("level", index);
 		
 		char levelname[30];
-		sprintf(levelname,"Level %lu",index+1);
+		sprintf(levelname, "Level %d", index + 1);
 		
 		BMenuItem *item = new BMenuItem(levelname,msg);
 		fLevelMenu->AddItem(item);
@@ -289,8 +312,7 @@ void GridView::SetPack(PuzzlePack *pack)
 
 	fLevelMenu->SetTargetForItems(this);
 
-	for(int32 i=0; i<fPackMenu->CountItems(); i++)
-	{
+	for(int8 i = 0; i < fPackMenu->CountItems(); i++) {
 		BMenuItem *packitem = fPackMenu->ItemAt(i);
 		if(strcmp(packitem->Label(),pack->Name())==0)
 		{
@@ -302,7 +324,7 @@ void GridView::SetPack(PuzzlePack *pack)
 	SetLevel(fPuzzle->Highest());
 }
 
-void GridView::SetLevel(uint8 level)
+void GridView::SetLevel(int8 level)
 {
 	if(fPuzzle->ValueAt(level)==0)
 		return;
@@ -311,24 +333,24 @@ void GridView::SetLevel(uint8 level)
 	fMoveCount = 0;
 	SetMovesLabel(fMoveCount);
 	
-	char label[30];
-	sprintf(label,"Level: %lu",fLevel+1);
+	char label[32];
+	sprintf(label, "Level: %d", fLevel + 1);
 	fLevelLabel->SetText(label);
 	fLevelLabel->ResizeToPreferred();
 	
 	fGrid->SetGridValues(fPuzzle->ValueAt(level));
-	for (uint8 i = 0; i < fDimension * fDimension; i++)
-	{
-		if (fGrid->ValueAt(i))
-			fButtons[i]->SetState(1);
-		else
-			fButtons[i]->SetState(0);
-	}
+	UpdateButtons();
 	BMenuItem *current = fLevelMenu->ItemAt(level);
 	current->SetMarked(true);
 }
 
-void GridView::SetMovesLabel(uint32 count)
+void GridView::UpdateButtons()
+{
+	for (int8 index = 0; index < fDimension * fDimension; index++)
+		fButtons[index]->SetState(fGrid->ValueAt(index));
+}
+
+void GridView::SetMovesLabel(int8 count)
 {
 	BString string("Moves: ");
 	string << count;
@@ -339,7 +361,7 @@ void GridView::HandleFinish()
 {
 	// Determine whether or not the user finished in the required number of
 	// moves
-	uint32 movesreq = fPuzzle->MovesRequired(fLevel);
+	int8 movesreq = fPuzzle->MovesRequired(fLevel);
 	if(fMoveCount > (movesreq+10))
 	{
 		if(fUseSound)
@@ -381,13 +403,12 @@ void GridView::StartupPreferences()
 		if(preferences.FindString("lastpack",&lastpack)!=B_OK)
 			lastpack = "Classic";
 		
-		for(int32 i=0; i<gPuzzles.CountPacks(); i++)
-		{
+		for(int8 i = 0; i < gPuzzles.CountPacks(); i++) {
 			PuzzlePack *pack = (PuzzlePack*)gPuzzles.PackAt(i);
 			if(pack)
 			{
-				int32 highest=0;
-				if(preferences.FindInt32(pack->Name(),&highest)==B_OK)
+				int8 highest = 0;
+				if (preferences.FindInt8(pack->Name(), &highest) == B_OK)
 					pack->SetHighest(highest);
 				else
 					pack->SetHighest(0);
@@ -422,13 +443,12 @@ void GridView::ShutdownPreferences()
 	preferences.MakeEmpty();
 	
 	// Save the progress in each of the puzzle packs
-	for(int32 i=0; i<gPuzzles.CountPacks(); i++)
-	{
+	for (int8 i = 0; i < gPuzzles.CountPacks(); i++) {
 		PuzzlePack *pack = (PuzzlePack*)gPuzzles.PackAt(i);
 		if(pack)
 		{
 			preferences.AddString("name",pack->Name());
-			preferences.AddInt32(pack->Name(),pack->Highest());
+			preferences.AddInt8(pack->Name(), pack->Highest());
 		}
 	}
 	preferences.AddString("lastpack",fPuzzle->Name());

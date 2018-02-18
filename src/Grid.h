@@ -14,18 +14,20 @@ class Grid
 {
 public:
 	Grid(int8 dimension);
-	void FlipValueAt(uint8 x, uint8 y);
-	void FlipValueAt(uint8 offset);
-	bool ValueAt(uint8 x, uint8 y);
-	bool ValueAt(uint8 offset);
-	void SetValue(uint8 offset, bool isOn);
-	void SetValue(uint8 x, uint8 y, bool isOn);
+	void SetDimension(int8 dimension);
+	void Random(int8 minMoves);
+	void FlipValueAt(int8 x, int8 y);
+	void FlipValueAt(int8 offset);
+	bool ValueAt(int8 x, int8 y);
+	bool ValueAt(int8 offset);
+	void SetValue(int8 offset, bool isOn);
+	void SetValue(int8 x, int8 y, bool isOn);
 	void SetGridValues(uint32 value);
 	uint32 GetGridValues();
 
 private:
 	int8 fDimension;
-	grid fData;
+	grid fData, fGrid;
 };
 
 #endif
