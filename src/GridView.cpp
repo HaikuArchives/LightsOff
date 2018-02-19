@@ -27,11 +27,12 @@ enum
 
 PuzzlePackSet gPuzzles;
 
-static const int8 minDimension = 5;	// set to 3 when ready
-static const int8 maxDimension = 5;	// set to 6 when ready
+static const float gridMargin = 50;
+static const int8 minDimension = 3;
+static const int8 maxDimension = 6;
 static const int8 defaultDimension = 5;
-//static const int8 maxLevels[maxDimension - minDimension + 1] = { 4, 7, 5, 18 };
-static const int8 maxLevels[1] = { 5 };
+static const int8 maxNumButtons = maxDimension * maxDimension;
+static const int8 maxLevels[maxDimension - minDimension + 1] = { 4, 7, 5, 16 };
 
 static void
 SuccessAlert()
@@ -91,27 +92,11 @@ GridView::GridView()
 	fMenu->AddSeparatorItem();
 	fMenu->AddItem(new BMenuItem("About",new BMessage(B_ABOUT_REQUESTED)));
 
-	fRandomMenu = new BMenu("Random");
-
-	for (int8 dimension = minDimension;
-		dimension <= maxDimension; dimension++) {
-		char label[4];
-		BMessage *msg = new BMessage(M_CHOOSE_RANDOM);
-
-		sprintf(label, "%dx%d", dimension, dimension);
-		msg->AddInt8("dimension", dimension);
-		fRandomMenu->AddItem(new BMenuItem(label, msg));
-	}
-
-	fRandomMenu->SetRadioMode(true);
-	fRandomMenu->ItemAt(defaultDimension - minDimension)->SetMarked(true);
-
 	fPackMenu = new BMenu("Puzzle pack");
-	fPackMenu->AddItem(fRandomMenu);
+	fPackMenu->SetRadioMode(true);
+	bar->AddItem(fPackMenu);
 
-	BMenuItem* superitem = fRandomMenu->Superitem();
-//	superitem->SetShortcut('R', B_COMMAND_KEY);
-	superitem->SetMessage(new BMessage(M_CHOOSE_RANDOM));
+	RandomMenu();
 
 	for (int8 i = 0; i < gPuzzles.CountPacks(); i++) {
 		PuzzlePack *pack = gPuzzles.PackAt(i);
@@ -120,38 +105,31 @@ GridView::GridView()
 		msg->AddInt8("index", i);
 		fPackMenu->AddItem(new BMenuItem(pack->Name(),msg));
 	}
-	
-	fPackMenu->SetRadioMode(true);
-	bar->AddItem(fPackMenu);
 
 	fLevelMenu = new BMenu("Level");
 	fLevelMenu->SetRadioMode(true);
 	bar->AddItem(fLevelMenu);
 
-	fButtons = (TwoStateDrawButton**)
-		malloc(sizeof(TwoStateDrawButton) * fDimension * fDimension);
-	float inset = 50;
-	r.Set(inset,inset + bar->Frame().bottom,inset+32,inset + bar->Frame().bottom + 32);
-	
-	int8 count=0;
-	for (int8 j = 0; j < fDimension; j++) {
-		for (int8 i = 0; i < fDimension; i++) {
-			BBitmap *off_up = BTranslationUtils::GetBitmap(B_PNG_FORMAT,1);
-			BBitmap *off_down = BTranslationUtils::GetBitmap(B_PNG_FORMAT,2);
-			BBitmap *on_up = BTranslationUtils::GetBitmap(B_PNG_FORMAT,3);
-			BBitmap *on_down = BTranslationUtils::GetBitmap(B_PNG_FORMAT,4);
-			
-			BString name = "button ";
-			name << count;
-			fButtons[count] = new TwoStateDrawButton(r,name.String(),off_up,
-							off_down, on_up,on_down,new BMessage(1000+count),
-							B_FOLLOW_NONE,B_WILL_DRAW);
-			AddChild(fButtons[count]);
-			count++;
-			r.OffsetBy(r.Width(),0);
-		}
-		r.OffsetTo(inset,r.bottom+1);
+	fButtons = new TwoStateDrawButton*[maxNumButtons];
+
+	for (int8 index = 0; index < maxNumButtons; index++) {
+		BBitmap* off_up = BTranslationUtils::GetBitmap(B_PNG_FORMAT, 1);
+		BBitmap* off_down = BTranslationUtils::GetBitmap(B_PNG_FORMAT, 2);
+		BBitmap* on_up = BTranslationUtils::GetBitmap(B_PNG_FORMAT, 3);
+		BBitmap* on_down = BTranslationUtils::GetBitmap(B_PNG_FORMAT, 4);
+
+		BString name = "button ";
+		name << index;
+		fButtons[index] = new TwoStateDrawButton(r,name.String(), off_up,
+			off_down, on_up, on_down, new BMessage(1000 + index));
+		fButtons[index]->ResizeToPreferred();
+		AddChild(fButtons[index]);
 	}
+
+	const float buttonSize = fButtons[0]->Bounds().Width();
+	const float gridTop = bar->Frame().bottom + gridMargin;
+	r.Set(gridMargin, gridTop, gridMargin + buttonSize, gridTop + buttonSize);
+	UpdateGrid(r, defaultDimension);
 
 	r.left = 10;
 	r.top = bar->Frame().bottom + 10;
@@ -174,18 +152,19 @@ GridView::GridView()
 	if (fPuzzle)
 		SetPack(fPuzzle);
 	else
-		SetDimension(fDimension);
+		SetRandom(fDimension);
 }
 
 GridView::~GridView()
 {
+	ShutdownPreferences();
+
 	delete fClickSound;
 	delete fWinSound;
 	delete fNoWinSound;
 	delete fGrid;
-	
-	ShutdownPreferences();
-	free(fButtons);
+
+	delete[] fButtons;
 }
 
 void GridView::AttachedToWindow()
@@ -194,13 +173,13 @@ void GridView::AttachedToWindow()
 		= fButtons[0]->Bounds().Width() * (fDimension - defaultDimension);
 	Window()->ResizeBy(delta, delta);
 
-	for (int8 i = 0; i < fDimension * fDimension; i++)
-		fButtons[i]->SetTarget(this);
-	
+	for (int8 index = 0; index < maxNumButtons; index++)
+		fButtons[index]->SetTarget(this);
+
 	fMenu->SetTargetForItems(this);
 	fSoundMenu->SetTargetForItems(this);
-	fRandomMenu->SetTargetForItems(this);
 	fPackMenu->SetTargetForItems(this);
+	fRandomMenu->SetTargetForItems(this);
 	fLevelMenu->SetTargetForItems(this);
 }
 
@@ -267,19 +246,23 @@ void GridView::MessageReceived(BMessage *msg)
 		}
 		case M_CHOOSE_RANDOM:
 		{
-			int8 dimension = msg->GetInt8("dimension", defaultDimension);
-			if (fDimension != dimension) {
-				fDimension = dimension;
-				fGrid->SetDimension(dimension);
+			int8 dimension;
+			if (msg->FindInt8("dimension", &dimension) != B_OK) {
+				int8 index = fRandomMenu->FindMarkedIndex();
+				dimension = index == -1 ? defaultDimension
+					: minDimension + index;
 			}
-			SetDimension(dimension);
+			UpdateDimension(dimension);
+			SetRandom(dimension);
 			break;
 		}
 		case M_CHOOSE_PACK:
 		{
 			int8 index;
-			if (msg->FindInt8("index", &index) == B_OK)
+			if (msg->FindInt8("index", &index) == B_OK) {
+				UpdateDimension(defaultDimension);
 				SetPack(gPuzzles.PackAt(index));
+			}
 			break;
 		}
 		case M_CHOOSE_LEVEL:
@@ -294,6 +277,28 @@ void GridView::MessageReceived(BMessage *msg)
 	}
 }
 
+void GridView::RandomMenu()
+{
+	fRandomMenu = new BMenu("Random");
+	fRandomMenu->SetRadioMode(true);
+	fPackMenu->AddItem(fRandomMenu);
+
+	BMenuItem* superitem = fRandomMenu->Superitem();
+//	superitem->SetShortcut('R', B_COMMAND_KEY);
+	superitem->SetMessage(new BMessage(M_CHOOSE_RANDOM));
+
+	for (int8 dimension = minDimension;
+		dimension <= maxDimension; dimension++) {
+		char label[4];
+		BMessage* msg = new BMessage(M_CHOOSE_RANDOM);
+
+		sprintf(label, "%dx%d", dimension, dimension);
+		msg->AddInt8("dimension", dimension);
+		fRandomMenu->AddItem(new BMenuItem(label, msg));
+	}
+
+	fRandomMenu->ItemAt(fDimension - minDimension)->SetMarked(true);
+}
 
 void GridView::FlipButton(int8 offset)
 {
@@ -309,7 +314,7 @@ void GridView::FlipButton(int8 offset)
 	}
 }
 
-void GridView::SetDimension(int8 dimension)
+void GridView::SetRandom(int8 dimension)
 {
 	fPuzzle = NULL;
 
@@ -330,6 +335,46 @@ void GridView::SetDimension(int8 dimension)
 	fLevelMenu->SetTargetForItems(this);
 	fPackMenu->ItemAt(0)->SetMarked(true);
 	SetLevel(2);
+}
+
+void GridView::UpdateDimension(int8 dimension)
+{
+	if (fDimension == dimension)
+		return;
+
+	const int8 oldDimension = fDimension;
+	fDimension = dimension;
+	UpdateGrid(fButtons[0]->Frame(), oldDimension);
+	fGrid->SetDimension(fDimension);
+}
+
+void GridView::UpdateGrid(BRect rect, int8 oldDimension)
+{
+	int8 index = 0;
+
+	for (int8 row = 0; row < fDimension; row++) {
+		for (int8 column = 0; column < fDimension; column++) {
+			BButton* button = fButtons[index++];
+
+			button->MoveTo(rect.LeftTop());
+			rect.OffsetBy(rect.Width() + 1, 0);
+
+			if (button->IsHidden())
+				button->Show();
+		}
+
+		rect.OffsetTo(gridMargin, rect.bottom + 1);
+	}
+
+	while (index < maxNumButtons) {
+		BButton* button = fButtons[index++];
+
+		if (!button->IsHidden())
+			button->Hide();
+	}
+
+	const float delta = rect.Width() * (fDimension - oldDimension);
+	Window()->ResizeBy(delta, delta);
 }
 
 void GridView::SetPack(PuzzlePack *pack)
@@ -488,8 +533,8 @@ void GridView::ShutdownPreferences()
 	// Save the progress in each of the puzzle packs
 	for (int8 i = 0; i < gPuzzles.CountPacks(); i++) {
 		PuzzlePack *pack = (PuzzlePack*)gPuzzles.PackAt(i);
-		if(pack)
-		{
+
+		if(pack) {
 			preferences.AddString("name",pack->Name());
 			preferences.AddInt8(pack->Name(), pack->Highest());
 		}
@@ -497,9 +542,9 @@ void GridView::ShutdownPreferences()
 
 	if (fPuzzle)
 		preferences.AddString("lastpack", fPuzzle->Name());
+	else
+		preferences.AddInt8("dimension", fDimension);
 
-	preferences.AddInt8("dimension", fDimension);
 	preferences.AddBool("usesound",fUseSound);
-	
 	SavePreferences(PREFERENCES_PATH);
 }
