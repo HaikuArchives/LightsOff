@@ -9,7 +9,6 @@
 #include <FileGameSound.h>
 
 #include "TwoStateDrawButton.h"
-#include "DrawButton.h"
 #include "Grid.h"
 #include "PuzzlePack.h"
 
@@ -24,10 +23,13 @@ public:
 	void ShutdownPreferences();
 
 private:
+	void RandomMenu();
 	void FlipButton(int8 offset);
 	void UpdateButtons();
-	void SetDimension(int8 dimension);
+	void UpdateGrid(BRect rect, int8 oldDimension);
+	void UpdateDimension(int8 dimension);
 	void SetLevel(int8 level);
+	void SetRandom(int8 dimension);
 	void SetPack(PuzzlePack *pack);
 	void SetMovesLabel(int8 count);
 	void HandleFinish();

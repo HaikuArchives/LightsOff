@@ -3,9 +3,9 @@
 
 TwoStateDrawButton::TwoStateDrawButton(BRect frame, const char *name,
 	BBitmap *upone, BBitmap *downone, BBitmap *uptwo, BBitmap *downtwo,
-	BMessage *msg, const int32 &resize, const int32 &flags)
+	BMessage *msg)
 	:
-	BButton(frame, name, "", msg, resize, flags),
+	BButton(frame, name, "", msg, B_FOLLOW_NONE, B_WILL_DRAW),
  	fUpOne(upone),
 	fDownOne(downone),
 	fUpTwo(uptwo),

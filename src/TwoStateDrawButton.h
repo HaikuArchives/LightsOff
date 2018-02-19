@@ -10,10 +10,9 @@
 class TwoStateDrawButton : public BButton
 {
 public:
-			TwoStateDrawButton(BRect frame, const char *name, BBitmap *upone, 
-								BBitmap *downone, BBitmap *uptwo, BBitmap *downtwo, 
-								BMessage *msg, const int32 &resize, 
-								const int32 &flags);
+			TwoStateDrawButton(BRect frame, const char *name, BBitmap *upone,
+				BBitmap *downone, BBitmap *uptwo, BBitmap *downtwo,
+				BMessage *msg);
 			~TwoStateDrawButton(void);
 
 	void 	Draw(BRect update);
