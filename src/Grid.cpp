@@ -28,6 +28,44 @@ void Grid::Random(int8 minMoves)
 	for (int8 index = 0; index < numButtons; index++)
 		fData[index] = fGrid[index] = 0;
 
+	/*
+	 * Some of the eigenvectors
+	 *
+	 * An eigenvector is a puzzle whose solution is simply pressing all lit
+	 * buttons in the puzzle. --Owen
+	 */
+#if 0
+	// 3x3.png
+	if (fDimension == 3 && minMoves == 8) {
+		for (int8 index = 0; index < numButtons; index++)
+			fData[index] = fGrid[index] = 1;
+		fData[4] = 0;
+		return;
+	}
+
+	// 6x6.png
+	if (fDimension == 6 && minMoves == 6) {
+		fData[0] = fData[7] = fData[14] = fData[21] = fData[28] = fData[35] = 1;
+		return;
+	}
+
+	// 7x7.png
+	if (fDimension == 7 && minMoves == 16) {
+		fData[3] = fData[9] = fData[11] = fData[15] = fData[17] = fData[19]
+			= fData[21] = fData[23] = fData[25] = fData[27] = fData[29]
+			= fData[31] = fData[33] = fData[37] = fData[39] = fData[45] = 1;
+		return;
+	}
+
+	// 8x8.png
+	if (fDimension == 8 && minMoves == 14) {
+		fData[6] = fData[13] = fData[15] = fData[20] = fData[22] = fData[27]
+			= fData[29] = fData[34] = fData[36] = fData[41] = fData[43]
+			= fData[48] = fData[50] = fData[57] = 1;
+		return;
+	}
+#endif
+
 	if (minMoves > numButtons)
 		minMoves = numButtons;
 
