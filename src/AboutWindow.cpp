@@ -96,4 +96,16 @@ void AboutView::Draw(BRect update)
 	DrawBitmap(fLogo, BPoint(0,0));
 	SetHighColor(224,224,224);
 	DrawString(version,versionpos);
+
+	const float x = fLogo->Bounds().right;
+	const char* str = "Owen Pan";
+	BPoint point(x - StringWidth(str) - 38, 180);
+	DrawString(str, point);
+
+	font_height h;
+	be_plain_font->GetHeight(&h);
+	str = "2018";
+	point.x = x - StringWidth(str) - 51;
+	point.y += h.ascent + h.descent + h.leading;
+	DrawString(str, point);
 }
