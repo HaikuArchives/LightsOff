@@ -1,5 +1,7 @@
 #include "Grid.h"
 
+#include <stdlib.h>
+
 Grid::Grid(int8 dimension)
 {
 	SetDimension(dimension);

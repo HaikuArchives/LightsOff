@@ -6,7 +6,7 @@
 #include <MenuItem.h>
 #include <MenuBar.h>
 #include <stdio.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <Entry.h>
 #include "AboutWindow.h"
 #include "GridView.h"
@@ -303,7 +303,7 @@ void GridView::RandomMenu()
 
 		sprintf(label, "%dx%d", dimension, dimension);
 		msg->AddInt8("dimension", dimension);
-		fRandomMenu->AddItem(new BMenuItem(label, msg));
+		fRandomMenu->AddItem(new BMenuItem(label, msg, '0' + dimension));
 	}
 }
 
