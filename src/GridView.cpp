@@ -37,7 +37,7 @@ static const int8 maxNumButtons = maxDimension * maxDimension;
  * Maximum levels (number of moves required) for dimensions 3x3 through 8x8
  *
  * Note: although the nullity of 3x3 and 6x6 through 8x8 dimensions is 0, which
- * means the maximum level is n^2 where n = 3, 6, 7, or 8, I set them to 1 less
+ * means the maximum level is n*n where n = 3, 6, 7, or 8, I set them to 1 less
  * because otherwise, the solutions would be simply pressing all buttons. --Owen
  */
 static const int8 maxLevels[] = { 8, 7, 15, 35, 48, 63 };
@@ -198,19 +198,28 @@ void GridView::MessageReceived(BMessage *msg)
 	const int8 index = msg->what - 1000;
 
 	if (index >= 0 && index < fDimension * fDimension) {
-		if (fCurrentCount < fMoves.size())
-			fMoves[fCurrentCount] = index;
-		else
-			fMoves.push_back(index);
+		bool isUndo;
 
-		fCurrentCount++;
+		if (fCurrentCount > 0 && index == fMoves[fCurrentCount - 1]) {
+			fCurrentCount--;
+			isUndo = true;
+		} else {
+			if (fCurrentCount < fMoves.size())
+				fMoves[fCurrentCount] = index;
+			else
+				fMoves.push_back(index);
+
+			fCurrentCount++;
+			isUndo = false;
+		}
+
 		SetMovesLabel(fCurrentCount);
 		PressButton(index);
 
 		if (fUseSound)
 			fClickSound->StartPlaying();
 
-		if (fGrid->GetGridValues() == 0)
+		if (!isUndo && fGrid->GetGridValues() == 0)
 			HandleFinish();
 		else {
 			fMoveCount = fCurrentCount;
