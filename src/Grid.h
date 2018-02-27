@@ -5,7 +5,7 @@
 
 #include <SupportDefs.h>
 
-typedef std::vector<uint8> grid;
+typedef std::vector<int8> grid;
 
 // The Grid class performs data handling and translation for the lights
 // themselves and also makes it easy to write a level to disk. :)
@@ -22,8 +22,8 @@ public:
 	bool ValueAt(int8 offset);
 	void SetValue(int8 offset, bool isOn);
 	void SetValue(int8 x, int8 y, bool isOn);
-	void SetGridValues(uint32 value);
-	uint32 GetGridValues();
+	void SetGridValues(uint64 value);
+	uint64 GetGridValues();
 
 private:
 	int8 fDimension;

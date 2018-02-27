@@ -87,10 +87,6 @@ GridView::GridView()
 	fSoundMenu->AddItem(new BMenuItem("On",new BMessage(M_SOUND_ON)));
 	fSoundMenu->AddItem(new BMenuItem("Off",new BMessage(M_SOUND_OFF)));
 	fSoundMenu->SetRadioMode(true);
-	if(fUseSound)
-		fSoundMenu->ItemAt(0)->SetMarked(true);
-	else
-		fSoundMenu->ItemAt(1)->SetMarked(true);
 	
 	fMenu->AddSeparatorItem();
 	fMenu->AddItem(new BMenuItem("How to play",new BMessage(M_SHOW_MANUAL)));
@@ -117,6 +113,8 @@ GridView::GridView()
 	bar->AddItem(fLevelMenu);
 
 	StartupPreferences();
+	fSoundMenu->ItemAt(!fUseSound)->SetMarked(true);
+
 	fGrid = new Grid(fDimension);
 	srandom(system_time());
 
@@ -191,36 +189,36 @@ void GridView::AttachedToWindow()
 	fPackMenu->SetTargetForItems(this);
 	fRandomMenu->SetTargetForItems(this);
 	fLevelMenu->SetTargetForItems(this);
+
+	MakeFocus();
 }
 
 void GridView::MessageReceived(BMessage *msg)
 {
 	const int8 index = msg->what - 1000;
-	const int8 n = fDimension;	// n by n grid
 
-	if (index >= 0 && index < n * n) {
-		if (index % n)	// not leftmost column
-			FlipButton(index - 1);	// left neighbor
+	if (index >= 0 && index < fDimension * fDimension) {
+		if (fCurrentCount < fMoves.size())
+			fMoves[fCurrentCount] = index;
+		else
+			fMoves.push_back(index);
 
-		if ((index + 1) % n)	// not rightmost column
-			FlipButton(index + 1);	// right neighbor
-
-		if (index >= n)	// not top row
-			FlipButton(index - n);	// neighbor above
-
-		if (index < n * (n - 1))	// not bottom row
-			FlipButton(index + n);	// neighbor below
-
-		FlipButton(index);
-		fMoveCount++;
-		SetMovesLabel(fMoveCount);
+		fCurrentCount++;
+		SetMovesLabel(fCurrentCount);
+		PressButton(index);
 
 		if (fUseSound)
 			fClickSound->StartPlaying();
-	}
 
-	if (fGrid->GetGridValues() == 0)
-		HandleFinish();
+		if (fGrid->GetGridValues() == 0)
+			HandleFinish();
+		else {
+			fMoveCount = fCurrentCount;
+			fGridValues = 0;
+		}
+
+		return;
+	}
 
 	switch(msg->what)
 	{
@@ -286,6 +284,78 @@ void GridView::MessageReceived(BMessage *msg)
 	}
 }
 
+void GridView::KeyDown(const char* bytes, int32 numBytes)
+{
+	if (numBytes != 1) {
+		BView::KeyDown(bytes, numBytes);
+		return;
+	}
+
+	switch (bytes[0]) {
+		case B_HOME:
+			Restart();
+			break;
+		case B_LEFT_ARROW:
+			Undo();
+			break;
+		case B_RIGHT_ARROW:
+			Redo();
+			break;
+		case B_END:
+			Restore();
+			break;
+		default:
+			BView::KeyDown(bytes, numBytes);
+			return;
+	}
+}
+
+void GridView::Restart()
+{
+	if (fCurrentCount > 0) {
+		fCurrentCount = 0;
+		SetMovesLabel(0);
+
+		if (fGridValues == 0)
+			fGridValues = fGrid->GetGridValues();
+
+		fGrid->SetGridValues(fPuzzleValues);
+		UpdateButtons();
+	}
+}
+
+void GridView::Undo()
+{
+	if (fCurrentCount > 0) {
+		fCurrentCount--;
+		SetMovesLabel(fCurrentCount);
+
+		if (fGridValues == 0)
+			fGridValues = fGrid->GetGridValues();
+
+		PressButton(fMoves[fCurrentCount]);
+	}
+}
+
+void GridView::Redo()
+{
+	if (fCurrentCount < fMoveCount) {
+		PressButton(fMoves[fCurrentCount]);
+		fCurrentCount++;
+		SetMovesLabel(fCurrentCount);
+	}
+}
+
+void GridView::Restore()
+{
+	if (fCurrentCount < fMoveCount) {
+		fCurrentCount = fMoveCount;
+		SetMovesLabel(fMoveCount);
+		fGrid->SetGridValues(fGridValues);
+		UpdateButtons();
+	}
+}
+
 void GridView::RandomMenu()
 {
 	fRandomMenu = new BMenu("Random");
@@ -305,6 +375,25 @@ void GridView::RandomMenu()
 		msg->AddInt8("dimension", dimension);
 		fRandomMenu->AddItem(new BMenuItem(label, msg, '0' + dimension));
 	}
+}
+
+void GridView::PressButton(int8 index)
+{
+	FlipButton(index);
+
+	const int8 n = fDimension;	// n by n grid
+
+	if (index % n)	// not leftmost column
+		FlipButton(index - 1);	// left neighbor
+
+	if ((index + 1) % n)	// not rightmost column
+		FlipButton(index + 1);	// right neighbor
+
+	if (index >= n)	// not top row
+		FlipButton(index - n);	// neighbor above
+
+	if (index < n * (n - 1))	// not bottom row
+		FlipButton(index + n);	// neighbor below
 }
 
 void GridView::FlipButton(int8 offset)
@@ -423,9 +512,9 @@ void GridView::SetPack(PuzzlePack *pack)
 void GridView::SetLevel(int8 level)
 {
 	fLevel = level;
-	fMoveCount = 0;
-	SetMovesLabel(fMoveCount);
-	
+	fMoveCount = fCurrentCount = 0;
+	SetMovesLabel(0);
+
 	char label[16];
 	sprintf(label, "Level: %d", fLevel + 1);
 	fLevelLabel->SetText(label);
@@ -438,6 +527,7 @@ void GridView::SetLevel(int8 level)
 		fGrid->Random(level + 1);
 	}
 
+	fPuzzleValues = fGrid->GetGridValues();
 	UpdateButtons();
 
 	BMenuItem *current = fLevelMenu->ItemAt(level);
