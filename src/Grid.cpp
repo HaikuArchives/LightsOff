@@ -40,7 +40,7 @@ void Grid::Random(int8 minMoves)
 	// 3x3.png
 	if (fDimension == 3 && minMoves == 8) {
 		for (int8 index = 0; index < numButtons; index++)
-			fData[index] = fGrid[index] = 1;
+			fData[index] = 1;
 		fData[4] = 0;
 		return;
 	}
@@ -75,7 +75,8 @@ void Grid::Random(int8 minMoves)
 		int8 index;
 
 		// next random button not already marked
-		do index = random() % numButtons;
+		do
+			index = random() % numButtons;
 		while (fGrid[index]);
 
 		fGrid[index] = 1;	// mark the button to be pressed
@@ -101,7 +102,6 @@ void Grid::Random(int8 minMoves)
 		}
 }
 
-
 bool Grid::ValueAt(int8 x, int8 y)
 {
 	return fData[x + y * fDimension];
@@ -122,19 +122,19 @@ void Grid::SetValue(int8 offset, bool isOn)
 	fData[offset] = isOn;
 }
 
-void Grid::SetGridValues(uint32 value)
+void Grid::SetGridValues(uint64 value)
 {
 	for (int8 i = 0; i < fData.size(); i++)
-		fData[i] = (value & 1 << i) != 0;
+		fData[i] = (value & (uint64) 1 << i) != 0;
 }
 
-uint32 Grid::GetGridValues()
+uint64 Grid::GetGridValues()
 {
-	uint32 values = 0;
+	uint64 values = 0;
 
 	for (int8 i = 0; i < fData.size(); i++)
 		if(fData[i])
-			values |= 1 << i;
+			values |= (uint64) 1 << i;
 
 	return values;
 }

@@ -1,6 +1,8 @@
 #ifndef GRID_VIEW_H
 #define GRID_VIEW_H
 
+#include <vector>
+
 #include <View.h>
 #include <Message.h>
 #include <Menu.h>
@@ -18,12 +20,14 @@ public:
 	GridView();
 	~GridView();
 	void MessageReceived(BMessage *msg);
+	void KeyDown(const char* bytes, int32 numBytes);
 	void AttachedToWindow();
 	void StartupPreferences();
 	void ShutdownPreferences();
 
 private:
 	void RandomMenu();
+	void PressButton(int8 index);
 	void FlipButton(int8 offset);
 	void UpdateButtons();
 	void UpdateGrid(BRect rect, int8 oldDimension);
@@ -33,6 +37,10 @@ private:
 	void SetPack(PuzzlePack *pack);
 	void SetMovesLabel(int8 count);
 	void HandleFinish();
+	void Restart();
+	void Undo();
+	void Redo();
+	void Restore();
 
 	TwoStateDrawButton **fButtons;
 	BMenu *fMenu, *fSoundMenu, *fRandomMenu, *fPackMenu, *fLevelMenu;
@@ -42,7 +50,9 @@ private:
 	PuzzlePack *fPuzzle;
 
 	bool fUseSound;
-	int8 fDimension, fLevel, fMoveCount;
+	int8 fDimension, fLevel, fMoveCount, fCurrentCount;
+	uint64 fPuzzleValues, fGridValues;
+	std::vector<int8> fMoves;
 
 	BFileGameSound *fClickSound, *fWinSound, *fNoWinSound;
 };
