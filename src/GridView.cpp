@@ -45,31 +45,31 @@ static const int8 maxLevels[] = { 8, 7, 15, 35, 48, 63 };
 static int8 lastLevels[maxDimension - minDimension + 1];
 
 static void
-SuccessAlert()
+LoadSoundFile(BFileGameSound*& sound, const char* file)
 {
-	BAlert* alert = new BAlert("Lights Off", "Congratulations!", "OK");
-	alert->Go();
+	if (sound != NULL)
+		return;
+
+	sound = new BFileGameSound(file, false);
+
+	if (sound->InitCheck() == B_OK) {
+		sound->Preload();
+		return;
+	}
+
+	fprintf(stderr, "Error: can't open sound file %s\n", file);
+	delete sound;
+	sound = NULL;
 }
 
 GridView::GridView()
 	:
 	BView(BRect(0, 0, 260, 280), "gridview", B_FOLLOW_ALL, B_WILL_DRAW),
-	fPuzzle(NULL)
+	fPuzzle(NULL),
+	fClickSound(NULL),
+	fWinSound(NULL),
+	fNoWinSound(NULL)
 {
-	entry_ref ref;
-	
-	BEntry entry("click.wav");
-	entry.GetRef(&ref);
-	fClickSound = new BFileGameSound(&ref,false);
-	
-	entry.SetTo("fanfare.wav");
-	entry.GetRef(&ref);
-	fWinSound = new BFileGameSound(&ref,false);
-	
-	entry.SetTo("altwin.wav");
-	entry.GetRef(&ref);
-	fNoWinSound = new BFileGameSound(&ref,false);
-
 	SetViewColor(0,0,50);
 	
 	BRect r(0,0,Bounds().Width(),20);
@@ -216,7 +216,7 @@ void GridView::MessageReceived(BMessage *msg)
 		SetMovesLabel(fCurrentCount);
 		PressButton(index);
 
-		if (fUseSound)
+		if (fUseSound && fClickSound != NULL)
 			fClickSound->StartPlaying();
 
 		if (!isUndo && fGrid->GetGridValues() == 0)
@@ -243,6 +243,7 @@ void GridView::MessageReceived(BMessage *msg)
 		case M_SOUND_ON:
 		{
 			fUseSound = true;
+			LoadSoundFiles();
 			break;
 		}
 		case M_SOUND_OFF:
@@ -363,6 +364,13 @@ void GridView::Restore()
 		fGrid->SetGridValues(fGridValues);
 		UpdateButtons();
 	}
+}
+
+void GridView::LoadSoundFiles()
+{
+	LoadSoundFile(fClickSound, "click.wav");
+	LoadSoundFile(fWinSound, "fanfare.wav");
+	LoadSoundFile(fNoWinSound, "altwin.wav");
 }
 
 void GridView::RandomMenu()
@@ -559,7 +567,7 @@ void GridView::SetMovesLabel(int8 count)
 void GridView::HandleFinish()
 {
 	if (fPuzzle == NULL) {
-		SuccessAlert();
+		Success();
 		SetLevel(fLevel);
 		return;
 	}
@@ -569,7 +577,7 @@ void GridView::HandleFinish()
 	int8 movesreq = fPuzzle->MovesRequired(fLevel);
 	if(fMoveCount > (movesreq+10))
 	{
-		if(fUseSound)
+		if(fUseSound && fNoWinSound != NULL)
 			fNoWinSound->StartPlaying();
 		
 		BString msg("Great! You solved the puzzle but not within the maximum number ");
@@ -581,13 +589,10 @@ void GridView::HandleFinish()
 		SetLevel(fLevel);
 		return;
 	}
-	
-	if(fUseSound)
-		fWinSound->StartPlaying();
-	
+
 	// we got this far, so the user must have won. Congratulate him/her and
 	// advance the level if there are any more in the current puzzle pack
-	SuccessAlert();
+	Success();
 	SetLevel(fLevel+1);
 	
 	// SetLevel() increments fLevel for us
@@ -597,6 +602,15 @@ void GridView::HandleFinish()
 	BMenuItem *item = fLevelMenu->ItemAt(fLevel);
 	if(item && !item->IsEnabled())
 		item->SetEnabled(true);
+}
+
+void GridView::Success()
+{
+	if(fUseSound && fWinSound != NULL)
+		fWinSound->StartPlaying();
+
+	BAlert* alert = new BAlert("Lights Off", "Congratulations!", "OK");
+	alert->Go();
 }
 
 void GridView::StartupPreferences()
@@ -640,11 +654,8 @@ void GridView::StartupPreferences()
 		fUseSound = true;
 	}
 
-	if (fUseSound) {
-		fClickSound->Preload();
-		fWinSound->Preload();
-		fNoWinSound->Preload();
-	}
+	if (fUseSound)
+		LoadSoundFiles();
 }
 
 void GridView::ShutdownPreferences()

@@ -37,6 +37,8 @@ private:
 	void SetPack(PuzzlePack *pack);
 	void SetMovesLabel(int8 count);
 	void HandleFinish();
+	void Success();
+	void LoadSoundFiles();
 	void Restart();
 	void Undo();
 	void Redo();
