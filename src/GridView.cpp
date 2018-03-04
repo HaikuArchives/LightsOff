@@ -118,23 +118,22 @@ GridView::GridView()
 	fGrid = new Grid(fDimension);
 	srandom(system_time());
 
-	fButtons = new TwoStateDrawButton*[maxNumButtons];
+	fButtons = new BButton*[maxNumButtons];
+
+	const float buttonSize = 32;
 
 	for (int8 index = 0; index < maxNumButtons; index++) {
-		BBitmap* off_up = BTranslationUtils::GetBitmap(B_PNG_FORMAT, 1);
-		BBitmap* off_down = BTranslationUtils::GetBitmap(B_PNG_FORMAT, 2);
-		BBitmap* on_up = BTranslationUtils::GetBitmap(B_PNG_FORMAT, 3);
-		BBitmap* on_down = BTranslationUtils::GetBitmap(B_PNG_FORMAT, 4);
-
 		BString name = "button ";
 		name << index;
-		fButtons[index] = new TwoStateDrawButton(r,name.String(), off_up,
-			off_down, on_up, on_down, new BMessage(1000 + index));
-		fButtons[index]->ResizeToPreferred();
-		AddChild(fButtons[index]);
+		BButton*& button = fButtons[index];
+		button = new BButton(r, name.String(), NULL, new BMessage(1000 + index),
+			B_FOLLOW_NONE, B_WILL_DRAW);
+		button->SetBehavior(BButton::B_TOGGLE_BEHAVIOR);
+		button->SetValue(1);	// BButton bug workaround
+		button->ResizeTo(BSize(buttonSize, buttonSize));
+		AddChild(button);
 	}
 
-	const float buttonSize = fButtons[0]->Bounds().Width();
 	const float gridTop = bar->Frame().bottom + gridMargin;
 	r.Set(gridMargin, gridTop, gridMargin + buttonSize, gridTop + buttonSize);
 	UpdateGrid(r, defaultDimension);
@@ -214,7 +213,7 @@ void GridView::MessageReceived(BMessage *msg)
 		}
 
 		SetMovesLabel(fCurrentCount);
-		PressButton(index);
+		PressButton(index, true);
 
 		if (fUseSound && fClickSound != NULL)
 			fClickSound->StartPlaying();
@@ -394,9 +393,13 @@ void GridView::RandomMenu()
 	}
 }
 
-void GridView::PressButton(int8 index)
+void GridView::PressButton(int8 index, bool byMouse)
 {
-	FlipButton(index);
+	if (byMouse)
+//		fGrid->SetValue(index, fButtons[index]->Value());
+		fGrid->SetValue(index, !fButtons[index]->Value());	// BButton hack
+	else
+		FlipButton(index);
 
 	const int8 n = fDimension;	// n by n grid
 
@@ -415,16 +418,10 @@ void GridView::PressButton(int8 index)
 
 void GridView::FlipButton(int8 offset)
 {
-	if(fButtons[offset]->GetState())
-	{
-		fButtons[offset]->SetState(0);
-		fGrid->SetValue(offset, false);
-	}
-	else
-	{
-		fButtons[offset]->SetState(1);
-		fGrid->SetValue(offset, true);
-	}
+	BButton* button = fButtons[offset];
+	bool value = button->Value();
+	button->SetValue(!value);
+	fGrid->SetValue(offset, value);	// BButton bug workaround
 }
 
 void GridView::SetRandom(int8 dimension)
@@ -554,7 +551,8 @@ void GridView::SetLevel(int8 level)
 void GridView::UpdateButtons()
 {
 	for (int8 index = 0; index < fDimension * fDimension; index++)
-		fButtons[index]->SetState(fGrid->ValueAt(index));
+//		fButtons[index]->SetValue(fGrid->ValueAt(index));
+		fButtons[index]->SetValue(!fGrid->ValueAt(index));	// BButton hack
 }
 
 void GridView::SetMovesLabel(int8 count)

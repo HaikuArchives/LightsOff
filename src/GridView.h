@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include <Button.h>
 #include <View.h>
 #include <Message.h>
 #include <Menu.h>
@@ -10,7 +11,6 @@
 #include <List.h>
 #include <FileGameSound.h>
 
-#include "TwoStateDrawButton.h"
 #include "Grid.h"
 #include "PuzzlePack.h"
 
@@ -27,7 +27,7 @@ public:
 
 private:
 	void RandomMenu();
-	void PressButton(int8 index);
+	void PressButton(int8 index, bool byMouse = false);
 	void FlipButton(int8 offset);
 	void UpdateButtons();
 	void UpdateGrid(BRect rect, int8 oldDimension);
@@ -44,7 +44,7 @@ private:
 	void Redo();
 	void Restore();
 
-	TwoStateDrawButton **fButtons;
+	BButton** fButtons;
 	BMenu *fMenu, *fSoundMenu, *fRandomMenu, *fPackMenu, *fLevelMenu;
 	BStringView *fLevelLabel, *fMovesLabel;
 
