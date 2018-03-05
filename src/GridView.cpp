@@ -129,6 +129,7 @@ GridView::GridView()
 		button = new BButton(r, name.String(), NULL, new BMessage(1000 + index),
 			B_FOLLOW_NONE, B_WILL_DRAW);
 		button->SetBehavior(BButton::B_TOGGLE_BEHAVIOR);
+		button->SetValue(1);	// BButton bug workaround
 		button->ResizeTo(BSize(buttonSize, buttonSize));
 		AddChild(button);
 	}
@@ -395,7 +396,8 @@ void GridView::RandomMenu()
 void GridView::PressButton(int8 index, bool byMouse)
 {
 	if (byMouse)
-		fGrid->SetValue(index, fButtons[index]->Value());
+//		fGrid->SetValue(index, fButtons[index]->Value());
+		fGrid->SetValue(index, !fButtons[index]->Value());	// BButton hack
 	else
 		FlipButton(index);
 
@@ -417,9 +419,9 @@ void GridView::PressButton(int8 index, bool byMouse)
 void GridView::FlipButton(int8 offset)
 {
 	BButton* button = fButtons[offset];
-	bool value = !button->Value();
-	button->SetValue(value);
-	fGrid->SetValue(offset, value);
+	bool value = button->Value();
+	button->SetValue(!value);
+	fGrid->SetValue(offset, value);	// BButton bug workaround
 }
 
 void GridView::SetRandom(int8 dimension)
@@ -549,7 +551,8 @@ void GridView::SetLevel(int8 level)
 void GridView::UpdateButtons()
 {
 	for (int8 index = 0; index < fDimension * fDimension; index++)
-		fButtons[index]->SetValue(fGrid->ValueAt(index));
+//		fButtons[index]->SetValue(fGrid->ValueAt(index));
+		fButtons[index]->SetValue(!fGrid->ValueAt(index));	// BButton hack
 }
 
 void GridView::SetMovesLabel(int8 count)
