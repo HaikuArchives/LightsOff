@@ -1,13 +1,16 @@
-#include <Roster.h>
 #include <Alert.h>
+#include <Entry.h>
+#include <Roster.h>
+#include <MenuBar.h>
+#include <MenuItem.h>
+#include <Path.h>
 #include <String.h>
 #include <TranslationUtils.h>
 #include <TranslatorFormats.h>
-#include <MenuItem.h>
-#include <MenuBar.h>
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <Entry.h>
+
 #include "AboutWindow.h"
 #include "GridView.h"
 #include "Preferences.h"
@@ -50,7 +53,17 @@ LoadSoundFile(BFileGameSound*& sound, const char* file)
 	if (sound != NULL)
 		return;
 
-	sound = new BFileGameSound(file, false);
+	app_info info;
+	BPath path;
+	be_roster->GetAppInfo("application/x-vnd.wgp-LightsOff", &info);
+	BEntry entry(&info.ref);
+
+	entry.GetPath(&path);
+	path.GetParent(&path);
+	path.Append("media");
+	path.Append(file);
+
+	sound = new BFileGameSound(path.Path(), false);
 
 	if (sound->InitCheck() == B_OK) {
 		sound->Preload();
@@ -233,10 +246,18 @@ void GridView::MessageReceived(BMessage *msg)
 	{
 		case M_SHOW_MANUAL:
 		{
+			app_info info;
+			BPath path;
+			be_roster->GetActiveAppInfo(&info);
+			BEntry entry(&info.ref);
+
+			entry.GetPath(&path);
+			path.GetParent(&path);
+			path.Append("docs/GettingStarted.html");
+
+			entry = path.Path();
 			entry_ref ref;
-			BEntry entry("GettingStarted.htm");
 			entry.GetRef(&ref);
-			
 			be_roster->Launch(&ref);
 			break;
 		}
