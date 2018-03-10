@@ -27,7 +27,7 @@ public:
 
 private:
 	int8 fDimension;
-	grid fData, fGrid;
+	grid fData;
 };
 
 #endif
