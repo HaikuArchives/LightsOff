@@ -12,6 +12,18 @@
 #include <assert.h>	// assert
 #include <stdlib.h>	// random
 
+// partition the 5x5 grid into 4 subsets
+static const int c[] = { 0, 4, 20, 24 };					// corners
+static const int d[] = { 6, 8, 12, 16, 18 };				// diagonals
+static const int h[] = { 1, 3, 10, 11, 13, 14, 21, 23 };	// horizontal
+static const int v[] = { 2, 5, 7, 9, 15, 17, 19, 22 };		// vertical
+
+static const int cSize = 4;
+static const int dSize = 5;
+static const int hvSize = 8;
+
+static const int threshold = (cSize + hvSize) / 2;
+
 
 static void
 Swap(int& a, int& b)
@@ -25,8 +37,16 @@ Swap(int& a, int& b)
 }
 
 
+static void
+CopyArray(int dest[], const int src[], int size)
+{
+	for (int index = 0; index < size; index++)
+		dest[index] = src[index];
+}
+
+
 static bool
-find(int m, int array[], int size)
+find(int m, const int array[], int size)	// array size >= size
 {
 	for (int index = 0; index < size; index++)
 		if (m == array[index])
@@ -55,39 +75,51 @@ ChooseRandom(int array[], int n, int k)	// array size >= n
 }
 
 
+static void
+CopyRandom(int*& dest, const int src[], int size)
+{
+	const int k = size / 2;
+
+	CopyArray(dest, src, size);
+	ChooseRandom(dest, size, k);
+	dest += k;
+}
+
+
 void
 ChooseRandom5x5(int array[], int k)	// array size >= 25
 {
 	assert(k > 0 && k <= 15);
 
-	// partition the 5x5 grid
-	int c[] = { 0, 4, 20, 24 };					// corners
-	int h[] = { 1, 3, 10, 11, 13, 14, 21, 23 };	// horizontal
-	int v[] = { 2, 5, 7, 9, 15, 17, 19, 22 };	// vertical
-//	int d[] = { 6, 8, 12, 16, 18 };				// diagonals
+	int n = 25;	// 5x5
 
-	// initialize the corresponding counters
+	if (k <= threshold) {
+		ChooseRandom(array, n, k);
+		return;
+	}
+
+	if (k == 15) {
+		CopyRandom(array, c, cSize);
+		CopyRandom(array, h, hvSize);
+		CopyRandom(array, v, hvSize);
+		CopyArray(array, d, dSize);
+		return;
+	}
+
+	// counters
 	int C = 0;
 	int H = 0;
 	int V = 0;
 
-	// set the upper limits of the counters
+	// upper limits of the counters
 	int CMax, HMax, VMax;
-	switch (k) {
-		case 14:
-			CMax = 3;
-			HMax = VMax = 5;
-			break;
-		case 15:
-			CMax = 2;
-			HMax = VMax = 4;
-			break;
-		default:
-			CMax = 4;
-			HMax = VMax = 8;
+	if (k == 14) {
+		CMax = 3;
+		HMax = VMax = 5;
+	} else {
+		CMax = cSize;
+		HMax = VMax = hvSize;
 	}
-
-	int n = 25;	// 5x5
 
 	for (int index = 0; index < k;) {
 		assert(n - index > 0);
@@ -99,18 +131,18 @@ ChooseRandom5x5(int array[], int k)	// array size >= 25
 		const int m = array[nextIndex];
 		bool skip = false;
 
-		if (find(m, c, 4))
-			if (C == CMax || C + H == 6 || C + V == 6)
+		if (find(m, c, cSize))
+			if (C == CMax || C + H == threshold || C + V == threshold)
 				skip = true;
 			else
 				C++;
-		else if (find(m, h, 8))
-			if (H == HMax || C + H == 6 || H + V == 8)
+		else if (find(m, h, hvSize))
+			if (H == HMax || C + H == threshold || H + V == hvSize)
 				skip = true;
 			else
 				H++;
-		else if (find(m, v, 8))
-			if (V == VMax || C + V == 6 || H + V == 8)
+		else if (find(m, v, hvSize))
+			if (V == VMax || C + V == threshold || H + V == hvSize)
 				skip = true;
 			else
 				V++;
