@@ -169,11 +169,6 @@ GridView::GridView()
 	fMovesLabel->SetText("Moves: 0");
 	AddChild(fMovesLabel);
 	fMovesLabel->SetHighColor(255,255,255);
-
-	if (fPuzzle)
-		SetPack(fPuzzle);
-	else
-		SetRandom(fDimension);
 }
 
 GridView::~GridView()
@@ -203,8 +198,14 @@ void GridView::AttachedToWindow()
 	fRandomMenu->SetTargetForItems(this);
 	fLevelMenu->SetTargetForItems(this);
 
+	if (fPuzzle)
+		SetPack(fPuzzle);
+	else
+		SetRandom(fDimension);
+
 	MakeFocus();
 }
+
 
 void GridView::MessageReceived(BMessage *msg)
 {
@@ -553,16 +554,25 @@ void GridView::SetLevel(int8 level)
 	fMoveCount = fCurrentCount = 0;
 	SetMovesLabel(0);
 
+	const int8 numMoves = level + 1;
+
 	char label[16];
-	sprintf(label, "Level: %d", fLevel + 1);
+	sprintf(label, "Level: %d", numMoves);
 	fLevelLabel->SetText(label);
 	fLevelLabel->ResizeToPreferred();
 
 	if (fPuzzle)
 		fGrid->SetGridValues(fPuzzle->ValueAt(level));
 	else {
+		if (!Window()->IsHidden())
+			for (int8 i = 0; i < 4; i++) {
+				fGrid->Random(fDimension + 1);
+				UpdateButtons();
+				Window()->UpdateIfNeeded();
+				snooze(1e5);
+			}
 		lastLevels[fDimension - minDimension] = level;
-		fGrid->Random(level + 1);
+		fGrid->Random(numMoves);
 	}
 
 	fPuzzleValues = fGrid->GetGridValues();
