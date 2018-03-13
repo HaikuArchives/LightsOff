@@ -559,22 +559,42 @@ void GridView::SetLevel(int8 level)
 	fLevelLabel->SetText(label);
 	fLevelLabel->ResizeToPreferred();
 
-	if (fPuzzle)
+	const bool isHidden = Window()->IsHidden();
+
+	if (!isHidden) {
+		fGrid->SetGridValues(0);
+		UpdateButtons();
+		Window()->UpdateIfNeeded();
+		snooze(2e5);
+	}
+
+	if (fPuzzle) {
 		fGrid->SetGridValues(fPuzzle->ValueAt(level));
-	else {
-		if (!Window()->IsHidden())
+
+		if (isHidden)
+			UpdateButtons();
+		else
+			for (int8 index = 0; index < fDimension * fDimension; index++)
+				if (fGrid->ValueAt(index)) {
+					fButtons[index]->SetState(true);
+					Window()->UpdateIfNeeded();
+					snooze(5e4);
+				}
+	} else {
+		if (!isHidden)
 			for (int8 i = 0; i < 4; i++) {
-				fGrid->Random(fDimension + 1);
+				fGrid->Random(fDimension);
 				UpdateButtons();
 				Window()->UpdateIfNeeded();
 				snooze(1e5);
 			}
+
 		lastLevels[fDimension - minDimension] = level;
 		fGrid->Random(numMoves);
+		UpdateButtons();
 	}
 
 	fPuzzleValues = fGrid->GetGridValues();
-	UpdateButtons();
 
 	BMenuItem *current = fLevelMenu->ItemAt(level);
 	current->SetMarked(true);
