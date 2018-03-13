@@ -1,20 +1,18 @@
+#include "GridView.h"
+
+#include <stdio.h>
+#include <stdlib.h>	// srandom
+
 #include <Alert.h>
-#include <Entry.h>
-#include <Roster.h>
 #include <MenuBar.h>
 #include <MenuItem.h>
 #include <Path.h>
-#include <String.h>
+#include <Roster.h>
 #include <TranslationUtils.h>
 #include <TranslatorFormats.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "AboutWindow.h"
-#include "GridView.h"
 #include "Preferences.h"
-#include "PuzzlePack.h"
 
 enum
 {
@@ -28,7 +26,7 @@ enum
 	M_SHOW_MANUAL
 };
 
-PuzzlePackSet gPuzzles;
+static PuzzlePackSet gPuzzles;
 
 static const float gridMargin = 50;
 static const int8 minDimension = 3;

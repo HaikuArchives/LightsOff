@@ -1,18 +1,13 @@
 #ifndef GRID_VIEW_H
 #define GRID_VIEW_H
 
-#include <vector>
-
-#include <View.h>
-#include <Message.h>
+#include <FileGameSound.h>
 #include <Menu.h>
 #include <StringView.h>
-#include <List.h>
-#include <FileGameSound.h>
 
-#include "TwoStateDrawButton.h"
 #include "Grid.h"
 #include "PuzzlePack.h"
+#include "TwoStateDrawButton.h"
 
 class GridView : public BView
 {
