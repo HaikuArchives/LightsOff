@@ -565,7 +565,7 @@ void GridView::SetLevel(int8 level)
 		fGrid->SetGridValues(0);
 		UpdateButtons();
 		Window()->UpdateIfNeeded();
-		snooze(2e5);
+		snooze((bigtime_t) 2e5);
 	}
 
 	if (fPuzzle) {
@@ -578,7 +578,7 @@ void GridView::SetLevel(int8 level)
 				if (fGrid->ValueAt(index)) {
 					fButtons[index]->SetState(true);
 					Window()->UpdateIfNeeded();
-					snooze(5e4);
+					snooze((bigtime_t) 5e4);
 				}
 	} else {
 		if (!isHidden)
@@ -586,7 +586,7 @@ void GridView::SetLevel(int8 level)
 				fGrid->Random(fDimension);
 				UpdateButtons();
 				Window()->UpdateIfNeeded();
-				snooze(1e5);
+				snooze((bigtime_t) 1e5);
 			}
 
 		lastLevels[fDimension - minDimension] = level;

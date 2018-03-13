@@ -75,14 +75,25 @@ void Grid::Random(int8 minMoves)
 	for (int8 index = 0; index < numButtons; index++)
 		buttonIndices[index] = index;
 
-	int8 begin;
 	const int8 n = fDimension;
+	int8 begin = 0;
 
-	if (n == 5) {
-		ChooseRandom5x5(buttonIndices, minMoves);
-		begin = 0;
-	} else
-		begin = ChooseRandom(buttonIndices, numButtons, minMoves);
+	switch (n) {
+		case 4:
+		{
+			const int puzzle = ChooseRandom4x4(buttonIndices, minMoves);
+			if (puzzle > 0) {
+				SetGridValues(puzzle);
+				return;
+			}
+			break;
+		}
+		case 5:
+			ChooseRandom5x5(buttonIndices, minMoves);
+			break;
+		default:
+			begin = ChooseRandom(buttonIndices, numButtons, minMoves);
+	}
 
 	for (int8 i = 0; i < minMoves; i++) {
 		const int8 index = buttonIndices[begin + i];
